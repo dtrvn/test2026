@@ -231,7 +231,7 @@ function ensureBackgroundButton(){
 function applyStoredBackground(){
   const image=localStorage.getItem('qlctCustomBackground');
   const tone=localStorage.getItem('qlctCustomBackgroundTone')||'light';
-  const edgeColor=localStorage.getItem('qlctCustomBackgroundEdge')||'#5f95c8';
+  const edgeColor=localStorage.getItem('qlctCustomBackgroundEdge')||'#eef5fb';
   const themeMeta=document.querySelector('meta[name="theme-color"]');
   if(themeMeta)themeMeta.setAttribute('content',image?edgeColor:'#2563eb');
   [document.documentElement,document.body,phone].filter(Boolean).forEach(el=>{
