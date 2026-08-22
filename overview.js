@@ -12,6 +12,7 @@ let appDataReady=false;
 let appUnlocked=false;
 let faceIdPrompted=false;
 let lastTouchEndAt=0;
+let loginBusy=false;
 
 let themeIndex=Number(localStorage.getItem('demoThemeIndex')||0);
 
@@ -610,26 +611,26 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   const hasAuthRequired=Object.values(collections).some(value=>value==='auth-required');
   const hasError=Object.values(collections).some(value=>value==='error')||status.error;
   const loaded=expected.length&&expected.every(name=>typeof collections[name]==='number');
-  const hasFaceId=!!localStorage.getItem(faceIdKey);
+  const pending=!!(status.authPending||loginBusy);
 
   if(!appUnlocked)appLoader.classList.remove('ready');
-  if(hasFaceId&&!appUnlocked&&!hasAuthRequired){
-    showFaceIdUnlock();
-    return;
-  }
-  if(!status.authReady){
+  if(!status.authReady||pending){
     appLoader.classList.remove('auth-needed');
-    if(appLoaderTitle)appLoaderTitle.textContent='Đang kiểm tra phiên đăng nhập';
-    if(appLoaderText)appLoaderText.textContent='Đang khôi phục phiên Firebase đã lưu trên thiết bị.';
-    if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
+    if(appLoaderTitle)appLoaderTitle.textContent=pending?'Đang hoàn tất đăng nhập':'Đang kiểm tra phiên đăng nhập';
+    if(appLoaderText)appLoaderText.textContent=pending?'Vui lòng chờ iPhone quay lại ứng dụng và khôi phục phiên Firebase.':'Đang khôi phục phiên Firebase đã lưu trên thiết bị.';
+    if(appLoaderLogin){
+      appLoaderLogin.textContent=pending?'Đang xử lý...':'Đăng nhập Google';
+      appLoaderLogin.disabled=pending;
+    }
     return;
   }
+  if(appLoaderLogin)appLoaderLogin.disabled=false;
   appLoader.classList.toggle('auth-needed',!status.auth&&hasAuthRequired);
   if(!status.auth&&hasAuthRequired){
     appUnlocked=false;
     appDataReady=false;
     if(appLoaderTitle)appLoaderTitle.textContent='Đăng nhập lần đầu';
-    if(appLoaderText)appLoaderText.textContent='Ứng dụng iPhone dùng phiên riêng với Safari. Đăng nhập Google một lần, sau đó có thể mở app bằng Face ID.';
+    if(appLoaderText)appLoaderText.textContent='Ứng dụng iPhone dùng phiên riêng với Safari. Đăng nhập Google một lần; các lần sau app sẽ tự khôi phục phiên nếu iOS còn lưu.';
     if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
     return;
   }
@@ -642,7 +643,9 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   if(status.auth){
     if(loaded)appDataReady=true;
     appUnlocked=true;
+    loginBusy=false;
     appLoader.classList.remove('auth-needed');
+    if(appLoaderLogin)appLoaderLogin.disabled=false;
     setTimeout(()=>appLoader.classList.add('ready'),80);
     return;
   }
@@ -740,7 +743,8 @@ async function handleUnlockFlow(){
 }
 
 appLoaderLogin?.addEventListener('click',async()=>{
-  if(localStorage.getItem(faceIdKey)){
+  if(loginBusy||window.FIREBASE_STATUS?.authPending)return;
+  if(localStorage.getItem(faceIdKey)&&window.FIREBASE_STATUS?.auth){
     try{
       const unlocked=await unlockWithFaceId();
       if(!unlocked)throw new Error('Face ID unavailable');
@@ -767,7 +771,15 @@ appLoaderLogin?.addEventListener('click',async()=>{
     appLoader.classList.add('ready');
     return;
   }
-  if(typeof window.FIREBASE_SIGN_IN==='function')window.FIREBASE_SIGN_IN();
+  if(typeof window.FIREBASE_SIGN_IN==='function'){
+    loginBusy=true;
+    updateAppLoader({...window.FIREBASE_STATUS,authPending:true});
+    try{await window.FIREBASE_SIGN_IN();}
+    catch(_err){
+      loginBusy=false;
+      updateAppLoader();
+    }
+  }
 });
 document.addEventListener('firebase:status',e=>updateAppLoader(e.detail));
 setTimeout(()=>updateAppLoader(),0);
