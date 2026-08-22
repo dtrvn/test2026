@@ -16,7 +16,12 @@ let lastTouchEndAt=0;
 let themeIndex=Number(localStorage.getItem('demoThemeIndex')||0);
 
 function preventPwaDoubleTapZoom(){
+  document.documentElement.style.touchAction='manipulation';
+  document.body.style.touchAction='manipulation';
+  phone?.style.setProperty('touch-action','manipulation');
   document.addEventListener('gesturestart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+  document.addEventListener('gesturechange',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+  document.addEventListener('gestureend',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
   document.addEventListener('dblclick',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
   document.addEventListener('touchend',e=>{
     const now=Date.now();
@@ -76,6 +81,17 @@ function ensureNumberKeyboard(){
   function isNumericInput(el){
     return el?.matches?.(numericSelector)&&!el.disabled;
   }
+  function prepareNumericInput(input){
+    if(!isNumericInput(input))return;
+    if(!input.dataset.numkeyMode)input.dataset.numkeyMode=input.getAttribute('inputmode')||'numeric';
+    input.dataset.numkeyManaged='1';
+    input.setAttribute('inputmode','none');
+    input.setAttribute('readonly','readonly');
+    input.setAttribute('autocomplete','off');
+  }
+  function prepareAllNumericInputs(root=document){
+    root.querySelectorAll?.(numericSelector).forEach(prepareNumericInput);
+  }
   function decimalAllowed(){
     return target?.dataset.numkeyMode==='decimal'||/Interest|Qty/i.test(target?.id||'');
   }
@@ -102,9 +118,8 @@ function ensureNumberKeyboard(){
     emitInput();
   }
   function openFor(input){
+    prepareNumericInput(input);
     target=input;
-    if(!target.dataset.numkeyMode)target.dataset.numkeyMode=target.getAttribute('inputmode')||'numeric';
-    if(!target.dataset.numkeyOriginalInputmode)target.dataset.numkeyOriginalInputmode=target.getAttribute('inputmode')||'';
     target.setAttribute('inputmode','none');
     target.setAttribute('readonly','readonly');
     target.classList.add('numkey-active-input');
@@ -116,12 +131,10 @@ function ensureNumberKeyboard(){
   }
   function close(){
     if(target){
-      const original=target.dataset.numkeyOriginalInputmode;
       try{target.blur();}catch(_err){}
       target.classList.remove('numkey-active-input');
-      target.removeAttribute('readonly');
-      if(original)target.setAttribute('inputmode',original);
-      else target.removeAttribute('inputmode');
+      target.setAttribute('inputmode','none');
+      target.setAttribute('readonly','readonly');
       target.dispatchEvent(new Event('change',{bubbles:true}));
     }
     panel?.classList.remove('show');
@@ -144,7 +157,10 @@ function ensureNumberKeyboard(){
     },{capture:true,passive:false});
   });
   document.addEventListener('focusin',e=>{
-    if(isNumericInput(e.target))openFor(e.target);
+    if(isNumericInput(e.target)){
+      if(target===e.target&&panel?.classList.contains('show'))return;
+      openFor(e.target);
+    }
   },true);
   panel.addEventListener('click',e=>{
     if(e.target.closest('[data-numkey-done]')){close();return;}
@@ -158,6 +174,16 @@ function ensureNumberKeyboard(){
     if(key!==undefined)setValue(String(target?.value||'')+key);
   });
   backdrop.addEventListener('click',close);
+  prepareAllNumericInputs();
+  new MutationObserver(mutations=>{
+    mutations.forEach(mutation=>{
+      mutation.addedNodes.forEach(node=>{
+        if(node.nodeType!==1)return;
+        if(isNumericInput(node))prepareNumericInput(node);
+        prepareAllNumericInputs(node);
+      });
+    });
+  }).observe(phoneEl,{childList:true,subtree:true});
 }
 
 function applyTheme(){

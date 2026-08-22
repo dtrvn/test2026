@@ -164,8 +164,9 @@
     const netAmount=action==='SELL'?Math.round(amount-input.fee):Math.round((amount||Math.round(input.qty*unitPrice))+input.fee);
     const costValue=action==='SELL'?-saleBasis.costBasis:netAmount;
     const date=firstValue(tx,['date','ngay','ngay_giao_dich'])||new Date().toISOString().slice(0,10);
+    const assetId=assetDocIdFor(tx,rule);
     return {
-      id:transactionAssetDocId(txnDocId),
+      id:assetId,
       source_txn_doc_id:txnDocId,
       source_txn_external_id:String(tx.external_id||tx.id||''),
       source_collection:FIREBASE_COLLECTIONS.giaoDich,
@@ -197,7 +198,7 @@
   function saleCostBasis(name,type,qtyRaw,fallbackAvg,txnDocId){
     const key=assetKey({loai_tai_san:type,ten_tai_san:name});
     const rows=displayAssetRows(visibleAssetRows(rawAssetRows))
-      .filter(row=>row.id!==transactionAssetDocId(txnDocId)&&row.source_txn_doc_id!==txnDocId&&assetKey(row)===key)
+      .filter(row=>row.id!==transactionAssetDocId(txnDocId)&&row.id!==formattedAssetDocId(type,{id:txnDocId,external_id:txnDocId})&&row.source_txn_doc_id!==txnDocId&&assetKey(row)===key)
       .map(row=>normalizeDetail(row,key));
     const costed=applyCostBasis(rows,key);
     const qtyField=isGoldKey(key)?'qtyChi':'qtyRaw';
@@ -504,8 +505,23 @@
     return !qty&&!value&&!cost;
   }
 
+  function isSavingAssetRow(row){
+    const key=assetKey(row);
+    return semanticAssetType(key,row)==='saving'
+      || String(row.loai_tai_san||row.loaiTaiSan||'').toUpperCase()==='SAVING';
+  }
+
+  function isClosedSavingAssetRow(row){
+    if(!isSavingAssetRow(row))return false;
+    const status=String(row.trang_thai||row.status||'').trim().toUpperCase();
+    const qty=Number(row.so_luong??row.soLuong??row.qty??row.quantity??0);
+    const value=parseNumber(row.gia_tri_hien_tai??row.currentValue??row.current??row.value??row.gia_tri??row.giaTri??row.so_tien??row.soTien);
+    const cost=parseNumber(row.tong_gia_von??row.totalCost??row.cost);
+    return ['CLOSED','INACTIVE','DELETED','REVERSED'].includes(status)||qty<=0||(!value&&!cost);
+  }
+
   function visibleAssetRows(rows){
-    const base=(rows||[]).filter(row=>!isClosedEmptyAssetRow(row)&&String(row.id||'')!=='TS_SAVING');
+    const base=(rows||[]).filter(row=>!isClosedEmptyAssetRow(row)&&!isClosedSavingAssetRow(row)&&String(row.id||'')!=='TS_SAVING');
     if(typeof window.TXN_getTransactions!=='function')return base;
     const txns=window.TXN_getTransactions();
     if(!Array.isArray(txns)||!txns.length)return base;
@@ -1798,6 +1814,15 @@
     return state;
   }
 
+  function shouldRemoveAssetAfterReverse(state){
+    const type=String(state.type||'').toUpperCase();
+    if(type==='BANK')return false;
+    const qty=Number(state.qty||0);
+    const currentValue=Number(state.currentValue||0);
+    const totalCost=Number(state.totalCost||0);
+    return qty<=0&&currentValue<=0&&totalCost<=0;
+  }
+
   function bankPayloadAfter(row,delta){
     const value=parseNumber(row?.gia_tri_hien_tai??row?.so_tien??row?.value)+delta;
     return {
@@ -1896,7 +1921,8 @@
             state.realizedProfit-=Number(d.lai_lo_thuc_hien||0);
           }
           recalcAssetState(state);
-          writer.set(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id,assetStatePayload(state),{merge:true});
+          if(shouldRemoveAssetAfterReverse(state)&&typeof writer.remove==='function')writer.remove(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id);
+          else writer.set(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id,assetStatePayload(state),{merge:true});
         }
       }
       writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{trang_thai_hach_toan:'REVERSED'},{merge:true});
@@ -1930,7 +1956,8 @@
       state.realizedProfit=Number(state.realizedProfit||0)-Number(d.lai_lo_thuc_hien||0);
     }
     recalcAssetState(state);
-    writer.set(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id,assetStatePayload(state),{merge:true});
+    if(shouldRemoveAssetAfterReverse(state)&&typeof writer.remove==='function')writer.remove(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id);
+    else writer.set(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id,assetStatePayload(state),{merge:true});
   }
 
   async function postTransactionInWriter(writer,tx,txnDocId,baseData){
@@ -1976,6 +2003,7 @@
       const assetIds=[...new Set([oldAssetId,newAssetId].filter(Boolean))];
       const bankRows={};
       const assetRows={};
+      const removedAssetIds=new Set();
       for(const id of bankIds)bankRows[id]=await writer.get(FIREBASE_COLLECTIONS.taiSan,id);
       for(const id of assetIds)assetRows[id]=await writer.get(FIREBASE_COLLECTIONS.taiSan,id);
       if(shouldReverse&&oldBankId){
@@ -1997,7 +2025,12 @@
           state.realizedProfit=Number(state.realizedProfit||0)-Number(oldDetail.lai_lo_thuc_hien||0);
         }
         recalcAssetState(state);
-        assetRows[oldAssetId]=assetStatePayload(state);
+        if(oldAssetId!==newAssetId&&shouldRemoveAssetAfterReverse(state)&&typeof writer.remove==='function'){
+          removedAssetIds.add(oldAssetId);
+          assetRows[oldAssetId]=null;
+        }else{
+          assetRows[oldAssetId]=assetStatePayload(state);
+        }
       }
       if(!newRule){
         const delta=accountingPayload(source).bien_dong_so_du;
@@ -2014,6 +2047,7 @@
         writer.set(FIREBASE_COLLECTIONS.giaoDich,txnDocId,{...(baseData||{}),...transactionUpdatePayload(source,newRule,applied.detail,balanceDelta)},{merge:true});
       }
       bankIds.forEach(id=>writer.set(FIREBASE_COLLECTIONS.taiSan,id,bankRows[id],{merge:true}));
+      removedAssetIds.forEach(id=>writer.remove(FIREBASE_COLLECTIONS.taiSan,id));
       assetIds.forEach(id=>{if(assetRows[id])writer.set(FIREBASE_COLLECTIONS.taiSan,id,assetRows[id],{merge:true});});
     };
     return window.FDB.runTransaction(run);
@@ -2081,7 +2115,7 @@
   window.ASSET52_deleteTransactionAtomic=deleteTransactionAtomic;
   window.ASSET52_removeTransactionAsset=function(txnDocId){
     if(!window.FDB||!txnDocId)return Promise.resolve();
-    return Promise.resolve();
+    return removeStaleTransactionAssets(txnDocId,[]);
   };
   window.ASSET52_reverseTransactionAsset=reversePostedTransaction;
   window.ASSET52_isTransactionAsset=isTransactionAsset;
