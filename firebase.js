@@ -53,7 +53,8 @@ window.FDB=(function(){
   let authReady=false;
 
   provider.setCustomParameters({prompt:'select_account'});
-  try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn('Auth persistence error:',e));}
+  let persistenceReady=Promise.resolve();
+  try{persistenceReady=auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn('Auth persistence error:',e));}
   catch(e){console.warn('Auth persistence error:',e);}
   function clearAuthRedirectUrl(){
     if(!/[?&]__/.test(window.location.search))return;
@@ -89,7 +90,12 @@ window.FDB=(function(){
 
   async function firebasePopupLogin(){
     console.log('Firebase Google sign-in start');
+    await persistenceReady;
     try{
+      if(isStandaloneIos()){
+        await auth.signInWithRedirect(provider);
+        return;
+      }
       await auth.signInWithPopup(provider);
     }catch(error){
       const canFallback=error&&['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request','auth/operation-not-supported-in-this-environment'].includes(error.code);

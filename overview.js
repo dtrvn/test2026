@@ -639,16 +639,11 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
     appLoader.classList.add('auth-needed');
     return;
   }
-  if(appUnlocked&&status.auth){
+  if(status.auth){
     if(loaded)appDataReady=true;
+    appUnlocked=true;
     appLoader.classList.remove('auth-needed');
     setTimeout(()=>appLoader.classList.add('ready'),80);
-    return;
-  }
-  if(status.auth&&!loaded){
-    if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
-    if(appLoaderText)appLoaderText.textContent='Phiên đăng nhập đã sẵn sàng, đang tải dữ liệu từ Firebase.';
-    if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
     return;
   }
   if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
