@@ -19,7 +19,7 @@
   --safe-right:env(safe-area-inset-right,0px);
   --shell-pad-x:14px;
   --shell-pad-top:16px;
-  --shell-dock-space:106px;
+  --shell-dock-space:82px;
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
