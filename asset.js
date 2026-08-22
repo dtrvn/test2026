@@ -421,12 +421,35 @@
       ||null;
   }
 
-  function removeStaleTransactionAssets(txnDocId,keepIds){
+  function removeStaleTransactionAssets(txnDocId,keepIds,sourceTx){
     const keep=new Set(keepIds||[]);
+    const source=sourceTx||{};
+    const detail=source.chi_tiet_tai_san||source.assetDetail||{};
+    const externalId=String(firstValue(source,['external_id','id'])||'');
+    const savingBookId=String(firstValue(source,['so_tiet_kiem_id','savingBookId'])||detail.so_tiet_kiem_id||'');
+    const rule=assetRuleFor(source);
+    const action=transactionAssetAction(source);
+    const candidateIds=[
+      action==='BUY'?detail.tai_san_id:'',
+      action==='BUY'&&rule?assetDocIdFor(source,rule):'',
+      rule?formattedAssetDocId(rule.assetType,source):'',
+      legacyTransactionAssetDocId(txnDocId),
+      transactionAssetDocId(txnDocId),
+      transactionCashDocId(txnDocId),
+      action==='BUY'?savingBookId:''
+    ].filter(Boolean).map(String);
     const stale=rawAssetRows
-      .filter(row=>row.source_txn_doc_id===txnDocId&&!keep.has(row.id))
+      .filter(row=>{
+        const rowId=String(row.id||'');
+        if(!rowId||keep.has(rowId))return false;
+        if(isCashKey(assetKey(row))&&rowId===BANK_ASSET_DOC_ID)return false;
+        if(String(row.source_txn_doc_id||'')===String(txnDocId))return true;
+        if(externalId&&String(row.source_txn_external_id||'')===externalId)return true;
+        if(action==='BUY'&&savingBookId&&String(row.so_tiet_kiem_id||row.savingBookId||'')===savingBookId)return true;
+        return candidateIds.includes(rowId);
+      })
       .map(row=>row.id);
-    [legacyTransactionAssetDocId(txnDocId),transactionAssetDocId(txnDocId),transactionCashDocId(txnDocId)].forEach(id=>{
+    candidateIds.forEach(id=>{
       if(id&&!keep.has(id)&&!stale.includes(id))stale.push(id);
     });
     return Promise.all(stale.map(id=>window.FDB.remove(FIREBASE_COLLECTIONS.taiSan,id).catch(console.error)));
@@ -2055,15 +2078,19 @@
 
   function deleteTransactionAtomic(tx,txnDocId){
     if(!txnDocId||!window.FDB)return Promise.resolve();
-    if(typeof window.FDB.runTransaction!=='function')return window.FDB.remove(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
+    if(typeof window.FDB.runTransaction!=='function'){
+      return window.FDB.remove(FIREBASE_COLLECTIONS.giaoDich,txnDocId)
+        .then(()=>removeStaleTransactionAssets(txnDocId,[],tx));
+    }
     const run=async writer=>{
       const stored=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       const source=stored||tx||{};
       if(source.trang_thai_hach_toan==='POSTED'||tx?.postingStatus==='POSTED')await reversePostedInWriter(writer,txnDocId,tx);
       if(typeof writer.remove==='function')writer.remove(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       else throw new Error('Transaction writer does not support remove().');
+      return source;
     };
-    return window.FDB.runTransaction(run);
+    return window.FDB.runTransaction(run).then(source=>removeStaleTransactionAssets(txnDocId,[],source||tx));
   }
 
   function todayBusinessPrefix(){
@@ -2184,6 +2211,7 @@
     if(e.target.closest('[data-asset-detail-back]'))closeDetail();
   },true);
   document.addEventListener('txn16:changed',()=>{
+    cleanedOrphanTransactionRows=false;
     cleanupOrphanTransactionAssetRows();
     normalizeAssets(rawAssetRows);
     renderAssets();
