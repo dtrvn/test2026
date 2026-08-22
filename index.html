@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822j" />
+<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822k" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css?v=cat-pan-y-20260822a" />
 <style>
@@ -1088,6 +1088,15 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone .slide-screen{top:0!important;right:0!important;bottom:0!important;left:0!important;height:auto!important;min-height:0!important;max-height:none!important;padding:calc(18px + var(--safe-top)) calc(16px + var(--safe-right)) calc(30px + var(--safe-bottom)) calc(16px + var(--safe-left))!important;}
   #phone .slide-screen .slide-body{max-height:none!important;overflow-x:hidden!important;}
 }
+@supports (height:100lvh){
+  @media(max-width:430px){
+    html,body{height:100lvh!important;min-height:100lvh!important;}
+    body{top:0!important;right:0!important;bottom:auto!important;left:0!important;}
+    #phone.phone{top:0!important;right:0!important;bottom:auto!important;left:0!important;height:100lvh!important;min-height:100lvh!important;max-height:none!important;}
+    #phone .slide-screen,
+    #phone .asset53-detail-screen{height:100lvh!important;min-height:100lvh!important;}
+  }
+}
 </style>
 </head>
 <body>
@@ -1201,7 +1210,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=asset-transaction-20260819a"></script>
-<script src="overview.js?v=iphone-shell-frame-20260822j"></script>
+<script src="overview.js?v=iphone-shell-frame-20260822k"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
@@ -1213,7 +1222,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822j').catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822k').catch(console.error);
   });
 }
 </script>
