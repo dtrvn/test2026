@@ -63,16 +63,14 @@ body.custom-bg::before{
 }
 .phone::after{
   content:"";
-  position:absolute;
+  position:fixed;
   left:0;
   right:0;
-  bottom:calc(var(--safe-bottom) * -1);
-  height:calc(var(--safe-bottom) + 28px);
+  bottom:0;
+  height:calc(var(--safe-bottom) + 42px);
   z-index:0;
   pointer-events:none;
-  background:inherit;
-  background-size:cover;
-  background-position:center bottom;
+  background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center bottom/cover no-repeat;
 }
 
 .bg-orb{position:absolute;border-radius:999px;filter:blur(8px);opacity:.6;pointer-events:none}
@@ -210,9 +208,9 @@ body.custom-bg{align-items:center}
   to{transform:rotate(-90deg)}
 }
 
-.tools{padding:8px 9px!important;background:rgba(255,255,255,.58)!important;border:1px solid rgba(255,255,255,.72)!important;box-shadow:0 14px 32px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.62)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:20px!important;margin-top:14px}
+.tools{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:0!important;margin-top:14px}
 .tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-bottom:0}
-.tool{height:50px;border-radius:14px;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.38);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#334155;box-shadow:inset 0 1px 0 rgba(255,255,255,.38);font-size:10.2px;font-weight:650}
+.tool{height:54px;border-radius:14px;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.38);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#334155;box-shadow:inset 0 1px 0 rgba(255,255,255,.38);font-size:10.2px;font-weight:650}
 .tool svg{width:24px;height:24px;stroke-width:1.85;color:var(--primary);padding:7px;border-radius:16px;background:rgba(255,255,255,.42);box-sizing:content-box}
 
 .expense-card{padding:9px 12px 8px;margin-top:0;min-height:0;flex:0 0 auto;display:flex;flex-direction:column;justify-content:flex-start}
