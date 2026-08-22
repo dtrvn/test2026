@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=pwa-notch-full-20260822a" />
+<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822a" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css?v=cat-pan-y-20260822a" />
 <style>
@@ -1046,7 +1046,6 @@ body.custom-bg{align-items:stretch!important;background-color:#eef5fb!important;
 #phone.custom-bg.custom-bg-dark .bg-btn{background:rgba(15,23,42,.38)!important;color:#fff!important;}
 @media(max-width:430px){
   #phone.custom-bg{position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;box-shadow:none!important;}
-  #phone.custom-bg .app{padding-top:calc(16px + env(safe-area-inset-top))!important;}
 }
 </style>
 <style id="pwa-input-keypad-fixes">
@@ -1061,6 +1060,27 @@ body.custom-bg{align-items:stretch!important;background-color:#eef5fb!important;
 #phone .legend-row{grid-template-columns:minmax(72px,1fr) minmax(102px,.92fr) 32px!important;}
 #phone .legend-row .legend-money{padding-left:20px!important;transform:none!important;overflow:visible!important;text-overflow:clip!important;}
 #phone .numkey-active-input{caret-color:transparent!important;background:#f8fbff!important;box-shadow:0 0 0 2px rgba(37,99,235,.12)!important;}
+</style>
+<style id="iphone-safe-shell-frame">
+:root{
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);
+  --safe-right:env(safe-area-inset-right,0px);
+  --shell-pad-x:14px;
+  --shell-pad-top:16px;
+  --shell-dock-space:106px;
+}
+html,body{background-color:#eef5fb!important;overflow:hidden!important;}
+html::before,body::before{content:""!important;position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center/cover no-repeat!important;}
+@media(max-width:430px){
+  #phone.phone{position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;}
+  #phone .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important;}
+  #phone .cash-card{top:calc(86px + var(--safe-top))!important;left:calc(14px + var(--safe-left))!important;right:calc(14px + var(--safe-right))!important;}
+  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(8px + var(--safe-bottom))!important;}
+  #phone .slide-screen{top:0!important;right:0!important;bottom:0!important;left:0!important;height:auto!important;min-height:0!important;max-height:none!important;padding:calc(18px + var(--safe-top)) calc(16px + var(--safe-right)) calc(30px + var(--safe-bottom)) calc(16px + var(--safe-left))!important;}
+  #phone .slide-screen .slide-body{max-height:none!important;overflow-x:hidden!important;}
+}
 </style>
 </head>
 <body>
@@ -1174,7 +1194,7 @@ body.custom-bg{align-items:stretch!important;background-color:#eef5fb!important;
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=asset-transaction-20260819a"></script>
-<script src="overview.js?v=pwa-notch-full-20260822a"></script>
+<script src="overview.js?v=iphone-shell-frame-20260822a"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
@@ -1186,7 +1206,7 @@ body.custom-bg{align-items:stretch!important;background-color:#eef5fb!important;
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js?v=pwa-notch-full-20260822a').catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822a').catch(console.error);
   });
 }
 </script>

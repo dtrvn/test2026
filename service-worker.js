@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-pwa-notch-full-a';
+const CACHE_NAME = 'qlct-pwa-v20260822-iphone-shell-frame-a';
 const APP_SHELL = [
   './',
   './index.html',
