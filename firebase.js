@@ -51,12 +51,15 @@ window.FDB=(function(){
   const provider=new firebase.auth.GoogleAuthProvider();
   const subscribers=new Map();
   let authReady=false;
+  const loadedCacheKeys=new Set();
 
   const SIGN_IN_PENDING_KEY='qlctFirebaseSignInPendingAt';
   const SIGN_IN_PENDING_MS=120000;
   let persistenceReady=Promise.resolve();
   try{persistenceReady=auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn('Auth persistence error:',e));}
   catch(e){console.warn('Auth persistence error:',e);}
+  try{db.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('Firestore persistence disabled:',e.code||e.message||e));}
+  catch(e){console.warn('Firestore persistence disabled:',e);}
   function setSignInPending(pending){
     if(pending)localStorage.setItem(SIGN_IN_PENDING_KEY,String(Date.now()));
     else localStorage.removeItem(SIGN_IN_PENDING_KEY);
@@ -161,19 +164,35 @@ window.FDB=(function(){
     getSubscribers(name).forEach(item=>item.callback([]));
   }
 
+  function publishCollection(name,rows,meta={}){
+    reportFirebaseStatus({
+      ok:true,
+      error:null,
+      collections:{...window.FIREBASE_STATUS.collections,[name]:rows.length}
+    });
+    getSubscribers(name).forEach(item=>item.callback(rows,{collection:name,...meta}));
+  }
+
   function loadCollection(name){
     if(!auth.currentUser){
       notifyEmptyAuth(name);
       return Promise.resolve([]);
     }
-    return collection(name).get().then(snapshot=>{
+    const ref=collection(name);
+    const cacheKey=`${auth.currentUser.uid}:${name}`;
+    const cacheRead=loadedCacheKeys.has(cacheKey)
+      ? Promise.resolve([])
+      : ref.get({source:'cache'}).then(snapshot=>{
+          if(snapshot.empty)return [];
+          loadedCacheKeys.add(cacheKey);
+          const rows=rowsFrom(snapshot);
+          publishCollection(name,rows,{fromCache:true});
+          return rows;
+        }).catch(()=>[]);
+    return cacheRead.then(()=>ref.get()).then(snapshot=>{
       const rows=rowsFrom(snapshot);
-      reportFirebaseStatus({
-        ok:true,
-        error:null,
-        collections:{...window.FIREBASE_STATUS.collections,[name]:rows.length}
-      });
-      getSubscribers(name).forEach(item=>item.callback(rows,{collection:name}));
+      loadedCacheKeys.add(cacheKey);
+      publishCollection(name,rows,{fromCache:!!snapshot.metadata?.fromCache});
       return rows;
     }).catch(error=>{
       reportFirebaseStatus({

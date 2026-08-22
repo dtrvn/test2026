@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-pwa-auth-stable-b';
+const CACHE_NAME = 'qlct-pwa-v20260822-pwa-cache-first-c';
 const APP_SHELL = [
   './',
   './index.html',
