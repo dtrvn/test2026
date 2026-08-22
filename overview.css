@@ -63,17 +63,7 @@ body.custom-bg::after{
   box-shadow:0 30px 90px rgba(15,23,42,.24);
   border:1px solid rgba(255,255,255,.8);
 }
-.phone::after{
-  content:"";
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:calc(var(--safe-bottom) + 42px);
-  z-index:0;
-  pointer-events:none;
-  background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center bottom/cover no-repeat;
-}
+.phone::after{display:none}
 
 .bg-orb{position:absolute;border-radius:999px;filter:blur(8px);opacity:.6;pointer-events:none}
 .orb-a{width:190px;height:190px;background:#dbeafe;top:-80px;right:-50px}
