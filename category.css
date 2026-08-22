@@ -13,9 +13,12 @@
 
 #screenCategories.cat90-screen .slide-body{
   height:calc(100% - 44px)!important;
-  overflow:auto!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
   padding:0 0 20px!important;
   scrollbar-width:none!important;
+  overscroll-behavior-x:none!important;
+  touch-action:pan-y!important;
 }
 #screenCategories.cat90-screen .slide-body::-webkit-scrollbar{display:none!important;}
 
@@ -24,8 +27,10 @@
   gap:12px;
   max-width:none;
   width:100%;
+  min-width:0;
   margin:0 auto;
   box-sizing:border-box;
+  overflow-x:hidden;
 }
 .cat90-head{
   padding:16px 14px 14px;
@@ -218,9 +223,12 @@
 .cat90-editor .slide-head{height:38px!important;margin-bottom:6px!important;}
 .cat90-editor-body{
   flex:1;
-  overflow:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
   padding:0 0 20px;
   scrollbar-width:none;
+  overscroll-behavior-x:none;
+  touch-action:pan-y;
 }
 .cat90-editor-body::-webkit-scrollbar{display:none;}
 
@@ -297,8 +305,11 @@
   transition:transform .28s ease;
   pointer-events:none;
   max-height:74%;
-  overflow:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
   scrollbar-width:none;
+  overscroll-behavior-x:none;
+  touch-action:pan-y;
 }
 .cat90-sheet::-webkit-scrollbar{display:none;}
 .cat90-sheet.show{transform:translateY(0);pointer-events:auto;}
@@ -544,7 +555,7 @@
 .cat90-group{padding:8px;border-radius:12px;}
 .cat90-child{height:31px;border-radius:9px;}
 .cat90-large-head,.cat90-group-head{display:flex;align-items:center;padding-right:0;}
-.cat90-child-item{display:flex;align-items:center;padding-right:0;margin-right:-8px;}
+.cat90-child-item{display:flex;align-items:center;padding-right:0;margin-right:0;min-width:0;max-width:100%;overflow:hidden;}
 .cat90-delete-level,.cat90-child-delete{position:static;width:28px;min-width:28px;height:28px;flex:0 0 28px;margin-left:auto;transform:none;justify-self:auto;}
 .cat90-delete-level:hover,.cat90-child-delete:hover{transform:scale(1.04);}
 .cat90-child-item .cat90-child{min-width:0;}

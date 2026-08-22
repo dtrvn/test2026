@@ -231,11 +231,13 @@ function ensureBackgroundButton(){
 function applyStoredBackground(){
   const image=localStorage.getItem('qlctCustomBackground');
   const tone=localStorage.getItem('qlctCustomBackgroundTone')||'light';
-  phone.classList.toggle('custom-bg',!!image);
-  phone.classList.toggle('custom-bg-dark',!!image&&tone==='dark');
-  phone.classList.toggle('custom-bg-light',!!image&&tone!=='dark');
-  if(image)phone.style.setProperty('--custom-bg',`url("${image}")`);
-  else phone.style.removeProperty('--custom-bg');
+  [document.documentElement,document.body,phone].filter(Boolean).forEach(el=>{
+    el.classList.toggle('custom-bg',!!image);
+    el.classList.toggle('custom-bg-dark',!!image&&tone==='dark');
+    el.classList.toggle('custom-bg-light',!!image&&tone!=='dark');
+    if(image)el.style.setProperty('--custom-bg',`url("${image}")`);
+    else el.style.removeProperty('--custom-bg');
+  });
 }
 
 function canvasTone(canvas){

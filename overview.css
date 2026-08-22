@@ -49,9 +49,18 @@ body{position:fixed;inset:0;display:flex;justify-content:center;align-items:cent
 .bg-btn{width:33px;height:33px;border:0;border-radius:13px;background:rgba(255,255,255,.82);box-shadow:0 8px 22px rgba(15,23,42,.08);display:grid;place-items:center;color:var(--primary);cursor:pointer}
 .bg-btn svg{width:17px;height:17px;stroke-width:2}
 .phone.custom-bg{background-image:var(--custom-bg)!important;background-size:cover!important;background-position:center!important}
+html.custom-bg,
+body.custom-bg{
+  background-image:var(--custom-bg)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-color:#eef5fb!important;
+}
+body.custom-bg{align-items:stretch}
+.phone.custom-bg{border-color:transparent!important}
 .phone.custom-bg .bg-orb{display:none!important}
 .phone.custom-bg .app{background:transparent!important}
-.phone.custom-bg .app-loader{background-image:var(--custom-bg)!important;background-size:cover!important;background-position:center!important}
+.phone.custom-bg .app-loader{background-image:var(--custom-bg)!important;background-size:cover!important;background-position:center!important;background-color:transparent!important}
 .phone.custom-bg .card,.phone.custom-bg .stat,.phone.custom-bg .demo-card,.phone.custom-bg .asset52-card,.phone.custom-bg .asset53-detail-card{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .phone.custom-bg.custom-bg-dark .brand,
 .phone.custom-bg.custom-bg-dark .cash-title,
@@ -508,7 +517,8 @@ body{position:fixed;inset:0;display:flex;justify-content:center;align-items:cent
 
 @media(max-width:430px){
   body{align-items:stretch}
-  .phone{width:100vw;height:100vh;border-radius:0}
+  .phone{width:100vw;height:100vh;border-radius:0;border:0}
+  .phone.custom-bg{width:100vw!important;height:100dvh!important;max-width:100vw!important;max-height:100dvh!important;border:0!important;box-shadow:none!important}
   .app{padding:16px 14px 106px}
   .cash-card{top:86px;left:14px;right:14px}
   .dock-wrap{left:15px;right:15px;bottom:calc(8px + env(safe-area-inset-bottom));padding:0}

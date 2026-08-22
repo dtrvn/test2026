@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-ui-asset-fixes-b';
+const CACHE_NAME = 'qlct-pwa-v20260822-cat-pan-y-a';
 const APP_SHELL = [
   './',
   './index.html',

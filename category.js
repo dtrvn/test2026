@@ -8,6 +8,7 @@
   let formMessage={type:'',text:''};
   let pendingDeleteAction=null;
   let eventsBound=false;
+  let catTouchStart=null;
   let formState={large:'Chi tiêu',group:'Sinh hoạt',child:'Ăn uống'};
 
   function saveRows(){
@@ -709,6 +710,25 @@
   function bindEvents(){
     if(eventsBound)return;
     eventsBound=true;
+    document.addEventListener('touchstart',function(e){
+      const body=e.target.closest?.('#screenCategories.cat90-screen.active .slide-body');
+      if(!body)return;
+      const t=e.touches?.[0];
+      if(!t)return;
+      catTouchStart={x:t.clientX,y:t.clientY};
+    },{capture:true,passive:true});
+    document.addEventListener('touchmove',function(e){
+      if(!catTouchStart)return;
+      const body=e.target.closest?.('#screenCategories.cat90-screen.active .slide-body');
+      if(!body){catTouchStart=null;return;}
+      const t=e.touches?.[0];
+      if(!t)return;
+      const dx=t.clientX-catTouchStart.x;
+      const dy=t.clientY-catTouchStart.y;
+      if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>6&&e.cancelable)e.preventDefault();
+    },{capture:true,passive:false});
+    document.addEventListener('touchend',()=>{catTouchStart=null;},{capture:true,passive:true});
+    document.addEventListener('touchcancel',()=>{catTouchStart=null;},{capture:true,passive:true});
     document.addEventListener('click',function(e){
       if(e.target.closest('[data-cat-editor-close]')){
         closeEditor();
