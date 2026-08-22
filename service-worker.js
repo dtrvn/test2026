@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-bg-safe-area-c';
+const CACHE_NAME = 'qlct-pwa-v20260822-pwa-notch-full-a';
 const APP_SHELL = [
   './',
   './index.html',
