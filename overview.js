@@ -11,8 +11,119 @@ const faceIdKey='qlctFaceIdCredentialId';
 let appDataReady=false;
 let appUnlocked=false;
 let faceIdPrompted=false;
+let lastTouchEndAt=0;
 
 let themeIndex=Number(localStorage.getItem('demoThemeIndex')||0);
+
+function preventPwaDoubleTapZoom(){
+  document.addEventListener('touchend',e=>{
+    const now=Date.now();
+    if(now-lastTouchEndAt<320&&e.cancelable)e.preventDefault();
+    lastTouchEndAt=now;
+  },{passive:false});
+}
+
+function ensureNumberKeyboard(){
+  const numericSelector='input[inputmode="numeric"],input[inputmode="decimal"],input[data-numkey-mode],#gold77Input';
+  const phoneEl=document.getElementById('phone');
+  if(!phoneEl||document.getElementById('numkeyPanel'))return;
+  phoneEl.insertAdjacentHTML('beforeend',`
+    <div class="numkey-backdrop" id="numkeyBackdrop"></div>
+    <div class="numkey-panel" id="numkeyPanel" aria-hidden="true">
+      <div class="numkey-display">
+        <div class="numkey-value" id="numkeyValue">0</div>
+        <button class="numkey-done" type="button" data-numkey-done>Xong</button>
+      </div>
+      <div class="numkey-grid">
+        <button class="numkey-key" type="button" data-numkey="1">1</button>
+        <button class="numkey-key" type="button" data-numkey="2">2</button>
+        <button class="numkey-key" type="button" data-numkey="3">3</button>
+        <button class="numkey-key" type="button" data-numkey="4">4</button>
+        <button class="numkey-key" type="button" data-numkey="5">5</button>
+        <button class="numkey-key" type="button" data-numkey="6">6</button>
+        <button class="numkey-key" type="button" data-numkey="7">7</button>
+        <button class="numkey-key" type="button" data-numkey="8">8</button>
+        <button class="numkey-key" type="button" data-numkey="9">9</button>
+        <button class="numkey-key wide" type="button" data-numkey="00">00</button>
+        <button class="numkey-key" type="button" data-numkey="0">0</button>
+        <button class="numkey-key wide" type="button" data-numkey="000">000</button>
+        <button class="numkey-key action" type="button" data-numkey-clear>C</button>
+        <button class="numkey-key action" type="button" data-numkey-decimal>.</button>
+        <button class="numkey-key action" type="button" data-numkey-back>⌫</button>
+      </div>
+    </div>`);
+  const panel=document.getElementById('numkeyPanel');
+  const backdrop=document.getElementById('numkeyBackdrop');
+  const valueEl=document.getElementById('numkeyValue');
+  let target=null;
+
+  function isNumericInput(el){
+    return el?.matches?.(numericSelector)&&!el.disabled;
+  }
+  function decimalAllowed(){
+    return target?.dataset.numkeyMode==='decimal'||/Interest|Qty/i.test(target?.id||'');
+  }
+  function displayValue(){
+    if(!valueEl)return;
+    const value=String(target?.value||'');
+    valueEl.textContent=value||'0';
+  }
+  function emitInput(){
+    if(!target)return;
+    target.dispatchEvent(new Event('input',{bubbles:true}));
+    displayValue();
+  }
+  function setValue(next){
+    if(!target)return;
+    const allowDecimal=decimalAllowed();
+    let value=String(next||'');
+    value=allowDecimal?value.replace(/[^\d.]/g,''):value.replace(/\D/g,'');
+    if(allowDecimal){
+      const parts=value.split('.');
+      value=parts.shift()+(parts.length?'.'+parts.join(''):'');
+    }
+    target.value=value;
+    emitInput();
+  }
+  function openFor(input){
+    target=input;
+    if(!target.dataset.numkeyMode)target.dataset.numkeyMode=target.getAttribute('inputmode')||'numeric';
+    target.setAttribute('inputmode','none');
+    target.blur();
+    displayValue();
+    panel?.classList.add('show');
+    backdrop?.classList.add('show');
+    panel?.setAttribute('aria-hidden','false');
+  }
+  function close(){
+    panel?.classList.remove('show');
+    backdrop?.classList.remove('show');
+    panel?.setAttribute('aria-hidden','true');
+    target=null;
+  }
+
+  document.addEventListener('pointerdown',e=>{
+    const input=e.target.closest?.(numericSelector);
+    if(!isNumericInput(input))return;
+    e.preventDefault();
+    openFor(input);
+  },true);
+  document.addEventListener('focusin',e=>{
+    if(isNumericInput(e.target))openFor(e.target);
+  },true);
+  panel.addEventListener('click',e=>{
+    if(e.target.closest('[data-numkey-done]')){close();return;}
+    if(e.target.closest('[data-numkey-clear]')){setValue('');return;}
+    if(e.target.closest('[data-numkey-back]')){setValue(String(target?.value||'').slice(0,-1));return;}
+    if(e.target.closest('[data-numkey-decimal]')){
+      if(decimalAllowed()&&!String(target?.value||'').includes('.'))setValue((target?.value||'')+'.');
+      return;
+    }
+    const key=e.target.closest('[data-numkey]')?.dataset.numkey;
+    if(key!==undefined)setValue(String(target?.value||'')+key);
+  });
+  backdrop.addEventListener('click',close);
+}
 
 function applyTheme(){
   phone.classList.remove(...themes.filter(Boolean));
@@ -464,7 +575,8 @@ ensureBackgroundButton();
 applyStoredBackground();
 ensureBackgroundPicker();
 ensureBusyOverlay();
-ensureNumberQuickBar();
+preventPwaDoubleTapZoom();
+ensureNumberKeyboard();
 
 themeBtn?.addEventListener('click',()=>{
   themeIndex=(themeIndex+1)%themes.length;
@@ -500,7 +612,7 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   const loaded=expected.length&&expected.every(name=>typeof collections[name]==='number');
   const hasFaceId=!!localStorage.getItem(faceIdKey);
 
-  if(!(loaded&&appUnlocked))appLoader.classList.remove('ready');
+  if(!appUnlocked)appLoader.classList.remove('ready');
   if(hasFaceId&&!appUnlocked&&!hasAuthRequired){
     showFaceIdUnlock();
     return;
@@ -525,6 +637,12 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
     if(appLoaderTitle)appLoaderTitle.textContent='Chưa kết nối được dữ liệu';
     if(appLoaderText)appLoaderText.textContent='Vui lòng kiểm tra đăng nhập Google hoặc kết nối mạng rồi thử lại.';
     appLoader.classList.add('auth-needed');
+    return;
+  }
+  if(appUnlocked&&status.auth){
+    if(loaded)appDataReady=true;
+    appLoader.classList.remove('auth-needed');
+    setTimeout(()=>appLoader.classList.add('ready'),80);
     return;
   }
   if(status.auth&&!loaded){

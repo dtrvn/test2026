@@ -15,8 +15,8 @@
   --shadow:0 14px 38px rgba(15,23,42,.10);
 }
 
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;background:linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%);color:var(--text)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;background:linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%);color:var(--text)}
 body{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;overflow:hidden;overscroll-behavior:none}
 
 .phone{
@@ -31,7 +31,10 @@ body{position:fixed;inset:0;display:flex;justify-content:center;align-items:cent
   background:linear-gradient(180deg,#f6fbff 0%,#eef5fb 100%);
   box-shadow:0 30px 90px rgba(15,23,42,.24);
   border:1px solid rgba(255,255,255,.8);
+  touch-action:manipulation;
 }
+
+button,.nav-item,.tool,.add39-control,.txn16-control,.gold77-select,.loader-login{touch-action:manipulation}
 
 .bg-orb{position:absolute;border-radius:999px;filter:blur(8px);opacity:.6;pointer-events:none}
 .orb-a{width:190px;height:190px;background:#dbeafe;top:-80px;right:-50px}
@@ -87,6 +90,19 @@ body{position:fixed;inset:0;display:flex;justify-content:center;align-items:cent
 .bg90-actions button{height:38px;border:0;border-radius:14px;font-size:12px;font-weight:760}
 .bg90-cancel{background:#eef5ff;color:#2563eb}
 .bg90-apply{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
+
+.numkey-backdrop{position:absolute;inset:0;z-index:320;background:rgba(15,23,42,.18);opacity:0;pointer-events:none;transition:opacity .18s ease}
+.numkey-backdrop.show{opacity:1;pointer-events:auto}
+.numkey-panel{position:absolute;left:0;right:0;bottom:0;z-index:330;background:rgba(248,251,255,.98);border-top:1px solid rgba(208,220,235,.9);box-shadow:0 -18px 44px rgba(15,23,42,.18);padding:10px 14px calc(12px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .22s cubic-bezier(.22,.61,.36,1)}
+.numkey-panel.show{transform:translateY(0)}
+.numkey-display{height:34px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.numkey-value{min-width:0;color:#0f172a;font-size:18px;font-weight:760;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.numkey-done{height:32px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-size:12px;font-weight:760;padding:0 14px;flex:0 0 auto}
+.numkey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.numkey-key{height:48px;border:0;border-radius:16px;background:#fff;color:#0f172a;font-size:20px;font-weight:740;box-shadow:0 6px 16px rgba(15,23,42,.075);display:grid;place-items:center}
+.numkey-key:active{transform:translateY(1px);background:#eef5ff}
+.numkey-key.wide{font-size:18px}
+.numkey-key.action{font-size:15px;color:#2563eb;background:#eef5ff}
 
 .cash-card{
   position:absolute;
