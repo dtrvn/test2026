@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822b" />
+<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822c" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css?v=cat-pan-y-20260822a" />
 <style>
@@ -1078,6 +1078,9 @@ html::before,body::before{content:""!important;position:fixed!important;inset:ca
   #phone .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important;}
   #phone .cash-card{top:calc(86px + var(--safe-top))!important;left:calc(14px + var(--safe-left))!important;right:calc(14px + var(--safe-right))!important;}
   #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(3px + var(--safe-bottom))!important;}
+  #phone::after{content:""!important;position:absolute!important;left:0!important;right:0!important;bottom:calc(var(--safe-bottom) * -1)!important;height:calc(var(--safe-bottom) + 28px)!important;z-index:0!important;pointer-events:none!important;background:inherit!important;background-size:cover!important;background-position:center bottom!important;}
+  #phone .dock-shell{backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;filter:drop-shadow(0 10px 20px rgba(38,55,88,.10))!important;}
+  #phone .dock-svg path{fill:rgba(255,255,255,.56)!important;stroke:rgba(255,255,255,.42)!important;stroke-width:1!important;}
   #phone .tools{padding:8px 9px!important;background:rgba(255,255,255,.58)!important;border:1px solid rgba(255,255,255,.72)!important;box-shadow:0 14px 32px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.62)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border-radius:20px!important;}
   #phone .tools-grid{padding-bottom:0!important;}
   #phone .tool{border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
@@ -1198,7 +1201,7 @@ html::before,body::before{content:""!important;position:fixed!important;inset:ca
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=asset-transaction-20260819a"></script>
-<script src="overview.js?v=iphone-shell-frame-20260822b"></script>
+<script src="overview.js?v=iphone-shell-frame-20260822c"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
@@ -1210,7 +1213,7 @@ html::before,body::before{content:""!important;position:fixed!important;inset:ca
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822b').catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822c').catch(console.error);
   });
 }
 </script>
