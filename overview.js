@@ -274,7 +274,7 @@ function ensureBackgroundPicker(){
       <div class="bg90-crop-card">
         <div class="bg90-crop-head"><b>Căn chỉnh hình nền</b><button type="button" id="bg90Close">×</button></div>
         <div class="bg90-canvas-wrap" id="bg90CanvasWrap"><canvas id="bg90Canvas"></canvas></div>
-        <label class="bg90-zoom"><span>Zoom</span><input id="bg90Zoom" type="range" min="0.6" max="3.5" step="0.01" value="1"></label>
+        <label class="bg90-zoom"><span>Zoom</span><input id="bg90Zoom" type="range" min="1" max="3.5" step="0.01" value="1"></label>
         <div class="bg90-actions"><button class="bg90-cancel" id="bg90Cancel" type="button">Hủy</button><button class="bg90-apply" id="bg90Apply" type="button">Áp dụng</button></div>
       </div>
     </div>`);
@@ -304,16 +304,16 @@ function ensureBackgroundPicker(){
   function drawCrop(){
     if(!cropState.img)return;
     canvasSize();
-    const scale=baseScale()*Number(zoom.value||1);
+    const coverScale=baseScale();
+    const scale=coverScale*Math.max(1,Number(zoom.value||1));
     cropState.scale=scale;
     const w=cropState.img.width*scale,h=cropState.img.height*scale;
     if(!cropState.x&&!cropState.y){
       cropState.x=(canvas.width-w)/2;
       cropState.y=(canvas.height-h)/2;
     }
-    const slack=80;
-    cropState.x=Math.min(slack,Math.max(canvas.width-w-slack,cropState.x));
-    cropState.y=Math.min(slack,Math.max(canvas.height-h-slack,cropState.y));
+    cropState.x=w<=canvas.width?(canvas.width-w)/2:Math.min(0,Math.max(canvas.width-w,cropState.x));
+    cropState.y=h<=canvas.height?(canvas.height-h)/2:Math.min(0,Math.max(canvas.height-h,cropState.y));
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(cropState.img,cropState.x,cropState.y,w,h);
   }
