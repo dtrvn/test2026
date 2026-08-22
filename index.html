@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822l" />
+<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822m" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css?v=cat-pan-y-20260822a" />
 <style>
@@ -877,13 +877,13 @@
 <style id="mobile-fit-overrides">
 .app{padding-bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 .cash-card{position:absolute!important;top:88px!important;left:16px!important;right:16px!important;min-height:46px!important;border-radius:0!important;padding:0 2px 2px!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;}
-.stats{margin-top:auto!important;}
+.stats{margin-top:auto!important;transform:translateY(var(--overview-stack-shift,-10px))!important;}
 .cash-card:before{display:none!important;}
 .cash-head{justify-content:flex-start!important;gap:6px!important;}
 .cash-title{font-weight:650!important;}
 .eye-btn{width:22px!important;height:22px!important;border-radius:9px!important;background:#edf3ff!important;}
 .cash-value{margin-top:5px!important;transform:none!important;font-size:20px!important;font-weight:760!important;}
-.alloc{padding:7px 10px 6px!important;min-height:130px!important;}
+.alloc{padding:7px 10px 6px!important;min-height:130px!important;transform:translateY(var(--overview-stack-shift,-10px))!important;}
 .alloc .card-title{margin-bottom:4px!important;}
 .donut-center b{display:block!important;width:74px!important;max-width:74px!important;font-size:clamp(8.6px,2.35vw,10px)!important;line-height:1.05!important;font-weight:760!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;letter-spacing:0!important;}
 .expense-row{grid-template-columns:minmax(62px,.9fr) minmax(54px,1fr) minmax(72px,.85fr)!important;gap:6px!important;min-width:0!important;font-size:9.5px!important;}
@@ -896,13 +896,13 @@
 .donut-wrap.donut-spin .donut-svg{animation:overviewDonutSpin .72s cubic-bezier(.22,.61,.36,1)!important;}
 .donut-svg circle{stroke-width:18px!important;}
 .donut-center small{font-size:8.6px!important;margin-top:2px!important;}
-.legend-row{display:grid!important;grid-template-columns:minmax(72px,1fr) minmax(102px,.92fr) 32px!important;gap:4px!important;align-items:center!important;font-size:9.3px!important;min-width:0!important;}
+.legend-row{display:grid!important;grid-template-columns:minmax(96px,1fr) minmax(94px,.78fr) 30px!important;gap:3px!important;align-items:center!important;font-size:9px!important;min-width:0!important;}
 .legend-name{display:grid!important;grid-template-columns:10px minmax(0,1fr)!important;gap:6px!important;align-items:center!important;min-width:0!important;}
 .legend-name span:last-child{min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.legend-row b{font-size:9.4px!important;text-align:right!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.legend-row b{font-size:9.2px!important;text-align:right!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .legend-money{color:#334155!important;}
 @keyframes overviewDonutSpin{from{transform:rotate(-450deg)}to{transform:rotate(-90deg)}}
-.expense-card{min-height:0!important;flex:0 0 auto!important;padding:9px 12px 8px!important;}
+.expense-card{min-height:0!important;flex:0 0 auto!important;padding:9px 12px 8px!important;transform:translateY(var(--overview-stack-shift,-10px))!important;}
 .expense-head{margin-bottom:6px!important;}
 .expense-chart{gap:4px!important;}
 .report72-card-head{align-items:flex-start!important;gap:7px!important;}
@@ -948,7 +948,7 @@
   place-self:center stretch!important;
   align-content:center!important;
 }
-.legend-row .legend-money{padding-left:20px!important;transform:none!important;overflow:visible!important;text-overflow:clip!important;}
+.legend-row .legend-money{padding-left:12px!important;transform:none!important;overflow:visible!important;text-overflow:clip!important;}
 .report72-flow-chart{border:1px solid #e4ebf5;border-radius:14px;background:linear-gradient(180deg,#fbfdff 0%,#f6faff 100%);padding:7px 8px 5px;overflow:hidden;}
 .report72-flow-chart svg{display:block;width:100%;height:132px;}
 .report72-grid-line{fill:none;stroke:#dbe5f1;stroke-width:1;stroke-dasharray:4 5;}
@@ -1057,8 +1057,8 @@ body.custom-bg{align-items:stretch!important;background-color:var(--safe-bg-colo
     -webkit-text-size-adjust:100%!important;
   }
 }
-#phone .legend-row{grid-template-columns:minmax(72px,1fr) minmax(102px,.92fr) 32px!important;}
-#phone .legend-row .legend-money{padding-left:20px!important;transform:none!important;overflow:visible!important;text-overflow:clip!important;}
+#phone .legend-row{grid-template-columns:minmax(96px,1fr) minmax(94px,.78fr) 30px!important;}
+#phone .legend-row .legend-money{padding-left:12px!important;transform:none!important;overflow:visible!important;text-overflow:clip!important;}
 #phone .numkey-active-input{caret-color:transparent!important;background:#f8fbff!important;box-shadow:0 0 0 2px rgba(37,99,235,.12)!important;}
 </style>
 <style id="iphone-safe-shell-frame">
@@ -1070,6 +1070,7 @@ body.custom-bg{align-items:stretch!important;background-color:var(--safe-bg-colo
   --shell-pad-x:14px;
   --shell-pad-top:16px;
   --shell-dock-space:58px;
+  --overview-stack-shift:-10px;
 }
 html,body{min-height:100%!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center bottom/cover no-repeat fixed!important;background-color:var(--safe-bg-color,#eef5fb)!important;overflow:hidden!important;}
 html::before,body::before,body::after{content:""!important;position:fixed!important;inset:-80px 0 -140px 0!important;z-index:0!important;pointer-events:none!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center bottom/cover no-repeat!important;}
@@ -1077,13 +1078,13 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
   #phone.phone{position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center/cover no-repeat!important;}
   #phone .app{height:100%!important;padding:calc(var(--shell-pad-top) + var(--safe-top)) calc(var(--shell-pad-x) + var(--safe-right)) calc(var(--shell-dock-space) + var(--safe-bottom)) calc(var(--shell-pad-x) + var(--safe-left))!important;}
   #phone .cash-card{top:calc(86px + var(--safe-top))!important;left:calc(14px + var(--safe-left))!important;right:calc(14px + var(--safe-right))!important;}
-  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(var(--safe-bottom) - 16px)!important;}
+  #phone .dock-wrap{left:calc(15px + var(--safe-left))!important;right:calc(15px + var(--safe-right))!important;bottom:calc(var(--safe-bottom) - 21px)!important;}
   #phone::after{display:none!important;}
   #phone .dock-shell{backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;filter:drop-shadow(0 10px 20px rgba(38,55,88,.10))!important;}
   #phone .dock-svg path{fill:rgba(255,255,255,.56)!important;stroke:rgba(255,255,255,.42)!important;stroke-width:1!important;}
   #phone .tools{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important;}
   #phone .tools-grid{padding-bottom:0!important;}
-  #phone .tool{height:54px!important;border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
+  #phone .tool{height:58px!important;border-radius:14px!important;background:rgba(255,255,255,.34)!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;text-shadow:none!important;}
   #phone .tool svg{background:rgba(255,255,255,.42)!important;}
   #phone .slide-screen{top:0!important;right:0!important;bottom:0!important;left:0!important;height:auto!important;min-height:0!important;max-height:none!important;padding:calc(18px + var(--safe-top)) calc(16px + var(--safe-right)) calc(30px + var(--safe-bottom)) calc(16px + var(--safe-left))!important;}
   #phone .slide-screen .slide-body{max-height:none!important;overflow-x:hidden!important;}
@@ -1201,7 +1202,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=asset-transaction-20260819a"></script>
-<script src="overview.js?v=iphone-shell-frame-20260822l"></script>
+<script src="overview.js?v=iphone-shell-frame-20260822m"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
@@ -1213,7 +1214,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822l').catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822m').catch(console.error);
   });
 }
 </script>
