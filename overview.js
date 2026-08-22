@@ -607,13 +607,20 @@ new MutationObserver(mutations=>{
 function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   if(!appLoader)return;
   const collections=status.collections||{};
-  const expected=[window.FIREBASE_COLLECTIONS?.danhMuc,window.FIREBASE_COLLECTIONS?.giaoDich,window.FIREBASE_COLLECTIONS?.taiSan].filter(Boolean);
   const hasAuthRequired=Object.values(collections).some(value=>value==='auth-required');
   const hasError=Object.values(collections).some(value=>value==='error')||status.error;
-  const loaded=expected.length&&expected.every(name=>typeof collections[name]==='number');
-  const pending=!!(status.authPending||loginBusy);
+  const pending=!!((status.authPending&&!status.authReady)||loginBusy);
 
   if(!appUnlocked)appLoader.classList.remove('ready');
+  if(status.auth){
+    appDataReady=true;
+    appUnlocked=true;
+    loginBusy=false;
+    appLoader.classList.remove('auth-needed');
+    if(appLoaderLogin)appLoaderLogin.disabled=false;
+    setTimeout(()=>appLoader.classList.add('ready'),80);
+    return;
+  }
   if(!status.authReady||pending){
     appLoader.classList.remove('auth-needed');
     if(appLoaderTitle)appLoaderTitle.textContent=pending?'Đang hoàn tất đăng nhập':'Đang kiểm tra phiên đăng nhập';
@@ -625,8 +632,8 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
     return;
   }
   if(appLoaderLogin)appLoaderLogin.disabled=false;
-  appLoader.classList.toggle('auth-needed',!status.auth&&hasAuthRequired);
-  if(!status.auth&&hasAuthRequired){
+  appLoader.classList.toggle('auth-needed',!status.auth&&(hasAuthRequired||status.authReady));
+  if(!status.auth&&(hasAuthRequired||status.authReady)){
     appUnlocked=false;
     appDataReady=false;
     if(appLoaderTitle)appLoaderTitle.textContent='Đăng nhập lần đầu';
@@ -640,21 +647,7 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
     appLoader.classList.add('auth-needed');
     return;
   }
-  if(status.auth){
-    if(loaded)appDataReady=true;
-    appUnlocked=true;
-    loginBusy=false;
-    appLoader.classList.remove('auth-needed');
-    if(appLoaderLogin)appLoaderLogin.disabled=false;
-    setTimeout(()=>appLoader.classList.add('ready'),80);
-    return;
-  }
-  if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
-  if(appLoaderText)appLoaderText.textContent='Kết nối Firebase và chuẩn bị không gian tài chính của bạn.';
-  if(loaded){
-    appDataReady=true;
-    handleUnlockFlow();
-  }
+  appLoader.classList.add('ready');
 }
 
 function showFaceIdUnlock(){
@@ -744,24 +737,11 @@ async function handleUnlockFlow(){
 
 appLoaderLogin?.addEventListener('click',async()=>{
   if(loginBusy||window.FIREBASE_STATUS?.authPending)return;
-  if(localStorage.getItem(faceIdKey)&&window.FIREBASE_STATUS?.auth){
-    try{
-      const unlocked=await unlockWithFaceId();
-      if(!unlocked)throw new Error('Face ID unavailable');
-      appUnlocked=true;
-      appLoader.classList.remove('auth-needed');
-      if(appDataReady)appLoader.classList.add('ready');
-      else{
-        if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
-        if(appLoaderText)appLoaderText.textContent='Đã mở khóa, đang tải dữ liệu từ Firebase.';
-        if(appLoaderLogin)appLoaderLogin.textContent='Mở khóa';
-      }
-    }catch(_err){
-      localStorage.removeItem(faceIdKey);
-      if(appLoaderTitle)appLoaderTitle.textContent='Đăng nhập Google';
-      if(appLoaderText)appLoaderText.textContent='Face ID đã lưu không còn hợp lệ trên thiết bị này. Vui lòng đăng nhập Google lại một lần.';
-      if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
-    }
+  if(window.FIREBASE_STATUS?.auth){
+    appUnlocked=true;
+    appDataReady=true;
+    appLoader.classList.remove('auth-needed');
+    appLoader.classList.add('ready');
     return;
   }
   if(appDataReady&&window.FIREBASE_STATUS?.auth){
