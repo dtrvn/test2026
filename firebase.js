@@ -80,7 +80,36 @@ window.FDB=(function(){
     window.history.replaceState({},document.title,clean);
   }
 
-  try{persistenceReady.then(()=>auth.getRedirectResult()).then(()=>{setSignInPending(false);clearAuthRedirectUrl();}).catch(e=>{setSignInPending(false);console.warn('Firebase redirect result error:',e);});}
+  try{
+    persistenceReady
+      .then(()=>auth.getRedirectResult())
+      .then(result=>{
+        clearAuthRedirectUrl();
+        const redirectUser=result?.user||auth.currentUser;
+        if(redirectUser){
+          reportFirebaseStatus({
+            auth:true,
+            authReady:true,
+            authPending:false,
+            user:{uid:redirectUser.uid,email:redirectUser.email,displayName:redirectUser.displayName},
+            error:null,
+            collections:{}
+          });
+          setSignInPending(false);
+          subscribers.forEach((_items,name)=>loadCollection(name));
+          return;
+        }
+        if(isSignInPending()){
+          setTimeout(()=>{
+            if(!auth.currentUser)setSignInPending(false);
+          },5000);
+        }
+      })
+      .catch(e=>{
+        setSignInPending(false);
+        console.warn('Firebase redirect result error:',e);
+      });
+  }
   catch(e){console.warn('Firebase redirect result error:',e);}
 
   const collection=name=>db.collection(name);

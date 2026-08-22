@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=pwa-auth-gate-20260822e" />
+<link rel="stylesheet" href="overview.css?v=pwa-auth-redirect-20260822f" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css" />
 <style>
@@ -1148,8 +1148,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase.js?v=pwa-auth-gate-20260822e"></script>
-<script src="overview.js?v=pwa-auth-gate-20260822e"></script>
+<script src="firebase.js?v=pwa-auth-redirect-20260822f"></script>
+<script src="overview.js?v=pwa-auth-redirect-20260822f"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cleanup-20260813e"></script>
 
@@ -1167,7 +1167,7 @@ if('serviceWorker' in navigator){
       refreshing=true;
       window.location.reload();
     });
-    navigator.serviceWorker.register('service-worker.js?v=pwa-auth-gate-20260822e').then(reg=>{
+    navigator.serviceWorker.register('service-worker.js?v=pwa-auth-redirect-20260822f').then(reg=>{
       reg.update?.();
       if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
       reg.addEventListener('updatefound',()=>{

@@ -609,7 +609,7 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   const collections=status.collections||{};
   const hasAuthRequired=Object.values(collections).some(value=>value==='auth-required');
   const hasError=Object.values(collections).some(value=>value==='error')||status.error;
-  const pending=!!((status.authPending&&!status.authReady)||loginBusy);
+  const pending=!!(status.authPending||loginBusy);
 
   if(!appUnlocked)appLoader.classList.remove('ready');
   if(status.auth){
