@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=ui-asset-fixes-20260822a" />
+<link rel="stylesheet" href="overview.css?v=ui-asset-fixes-20260822b" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css" />
 <style>
@@ -154,7 +154,7 @@
 }
 #screenTxnForm .add39-field.cat-row{gap:6px!important;}
 </style>
-<link rel="stylesheet" href="asset.css?v=ui-asset-fixes-20260822a">
+<link rel="stylesheet" href="asset.css?v=ui-asset-fixes-20260822b">
 <style id="asset-inline-fallback-css">
 /* Asset screens only - clean source, no stacked demo overrides */
 #screenAssets.asset52-screen,
@@ -1054,15 +1054,15 @@
 <body>
 <div class="phone" id="phone">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
-  <section class="app-loader ready" id="appLoader" aria-live="polite">
+  <section class="app-loader" id="appLoader" aria-live="polite">
     <div class="loader-card">
       <div class="loader-mark">
         <span></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10.5V19h11v-8.5"/><path d="M9.5 19v-5h5v5"/></svg>
       </div>
       <div class="loader-copy">
-        <b id="appLoaderTitle">Đang kiểm tra phiên đăng nhập</b>
-        <span id="appLoaderText">Ứng dụng sẽ mở tổng quan ngay khi phiên Firebase sẵn sàng.</span>
+        <b id="appLoaderTitle">Đang đồng bộ dữ liệu</b>
+        <span id="appLoaderText">Kết nối Firebase và chuẩn bị không gian tài chính của bạn.</span>
       </div>
       <div class="loader-progress"><i></i></div>
       <button class="loader-login" id="appLoaderLogin" type="button">Đăng nhập Google</button>
@@ -1161,37 +1161,20 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase.js?v=pwa-auth-redirect-20260822f"></script>
-<script src="overview.js?v=ui-asset-fixes-20260822a"></script>
+<script src="firebase.js?v=asset-transaction-20260819a"></script>
+<script src="overview.js?v=ui-asset-fixes-20260822b"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cleanup-20260813e"></script>
 
 <script src="add-transaction.js?v=add-num-pattern-20260821az"></script>
-<script src="asset.js?v=ui-asset-fixes-20260822a"></script>
+<script src="asset.js?v=ui-asset-fixes-20260822b"></script>
 <script src="report.js?v=detail-back-animation-20260818a"></script>
 <script src="gold.js?v=write-price-status-20260813"></script>
 
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    let refreshing=false;
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(refreshing)return;
-      refreshing=true;
-      window.location.reload();
-    });
-    navigator.serviceWorker.register('service-worker.js?v=ui-asset-fixes-20260822a').then(reg=>{
-      reg.update?.();
-      if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
-      reg.addEventListener('updatefound',()=>{
-        const worker=reg.installing;
-        worker?.addEventListener('statechange',()=>{
-          if(worker.state==='installed'&&navigator.serviceWorker.controller){
-            worker.postMessage({type:'SKIP_WAITING'});
-          }
-        });
-      });
-    }).catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=ui-asset-fixes-20260822b').catch(console.error);
   });
 }
 </script>

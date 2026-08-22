@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-ui-asset-fixes-a';
+const CACHE_NAME = 'qlct-pwa-v20260822-ui-asset-fixes-b';
 const APP_SHELL = [
   './',
   './index.html',
@@ -29,10 +29,6 @@ self.addEventListener('install',event=>{
       .then(cache=>cache.addAll(APP_SHELL))
       .then(()=>self.skipWaiting())
   );
-});
-
-self.addEventListener('message',event=>{
-  if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();
 });
 
 self.addEventListener('activate',event=>{

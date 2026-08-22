@@ -12,7 +12,7 @@ const FIREBASE_CONFIG={
 const FIREBASE_COLLECTIONS={danhMuc:'DanhMuc',giaoDich:'GiaoDich',taiSan:'TaiSan'};
 
 window.FIREBASE_COLLECTIONS=FIREBASE_COLLECTIONS;
-window.FIREBASE_STATUS={ok:false,auth:false,authReady:false,authPending:false,user:null,error:null,collections:{}};
+window.FIREBASE_STATUS={ok:false,auth:false,authReady:false,user:null,error:null,collections:{}};
 console.log('firebase.js loaded',FIREBASE_CONFIG.projectId);
 
 function reportFirebaseStatus(detail){
@@ -51,65 +51,17 @@ window.FDB=(function(){
   const provider=new firebase.auth.GoogleAuthProvider();
   const subscribers=new Map();
   let authReady=false;
-  const loadedCacheKeys=new Set();
 
-  const SIGN_IN_PENDING_KEY='qlctFirebaseSignInPendingAt';
-  const SIGN_IN_PENDING_MS=120000;
-  let persistenceReady=Promise.resolve();
-  try{persistenceReady=auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn('Auth persistence error:',e));}
+  provider.setCustomParameters({prompt:'select_account'});
+  try{auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn('Auth persistence error:',e));}
   catch(e){console.warn('Auth persistence error:',e);}
-  try{db.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('Firestore persistence disabled:',e.code||e.message||e));}
-  catch(e){console.warn('Firestore persistence disabled:',e);}
-  function setSignInPending(pending){
-    if(pending)localStorage.setItem(SIGN_IN_PENDING_KEY,String(Date.now()));
-    else localStorage.removeItem(SIGN_IN_PENDING_KEY);
-    reportFirebaseStatus({authPending:!!pending});
-  }
-  function isSignInPending(){
-    const value=Number(localStorage.getItem(SIGN_IN_PENDING_KEY)||0);
-    if(!value)return false;
-    if(Date.now()-value>SIGN_IN_PENDING_MS){
-      localStorage.removeItem(SIGN_IN_PENDING_KEY);
-      return false;
-    }
-    return true;
-  }
   function clearAuthRedirectUrl(){
     if(!/[?&]__/.test(window.location.search))return;
     const clean=window.location.origin+window.location.pathname+window.location.hash;
     window.history.replaceState({},document.title,clean);
   }
 
-  try{
-    persistenceReady
-      .then(()=>auth.getRedirectResult())
-      .then(result=>{
-        clearAuthRedirectUrl();
-        const redirectUser=result?.user||auth.currentUser;
-        if(redirectUser){
-          reportFirebaseStatus({
-            auth:true,
-            authReady:true,
-            authPending:false,
-            user:{uid:redirectUser.uid,email:redirectUser.email,displayName:redirectUser.displayName},
-            error:null,
-            collections:{}
-          });
-          setSignInPending(false);
-          subscribers.forEach((_items,name)=>loadCollection(name));
-          return;
-        }
-        if(isSignInPending()){
-          setTimeout(()=>{
-            if(!auth.currentUser)setSignInPending(false);
-          },5000);
-        }
-      })
-      .catch(e=>{
-        setSignInPending(false);
-        console.warn('Firebase redirect result error:',e);
-      });
-  }
+  try{auth.getRedirectResult().then(clearAuthRedirectUrl).catch(e=>console.warn('Firebase redirect result error:',e));}
   catch(e){console.warn('Firebase redirect result error:',e);}
 
   const collection=name=>db.collection(name);
@@ -137,20 +89,11 @@ window.FDB=(function(){
 
   async function firebasePopupLogin(){
     console.log('Firebase Google sign-in start');
-    await persistenceReady;
-    setSignInPending(true);
     try{
-      if(isStandaloneIos()){
-        await auth.signInWithRedirect(provider);
-        return;
-      }
       await auth.signInWithPopup(provider);
-      setSignInPending(false);
     }catch(error){
-      setSignInPending(false);
       const canFallback=error&&['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request','auth/operation-not-supported-in-this-environment'].includes(error.code);
       if(isStandaloneIos()&&canFallback){
-        setSignInPending(true);
         await auth.signInWithRedirect(provider);
         return;
       }
@@ -178,14 +121,9 @@ window.FDB=(function(){
   else startFirebaseApp();
 
   function notifyEmptyAuth(name){
-    if(isSignInPending()){
-      reportFirebaseStatus({auth:false,authPending:true,authReady,collections:{...window.FIREBASE_STATUS.collections}});
-      return;
-    }
     reportFirebaseStatus({
       ok:false,
       auth:false,
-      authPending:false,
       authReady,
       error:new Error('Can dang nhap Google de doc Firestore.'),
       collections:{...window.FIREBASE_STATUS.collections,[name]:'auth-required'}
@@ -193,35 +131,19 @@ window.FDB=(function(){
     getSubscribers(name).forEach(item=>item.callback([]));
   }
 
-  function publishCollection(name,rows,meta={}){
-    reportFirebaseStatus({
-      ok:true,
-      error:null,
-      collections:{...window.FIREBASE_STATUS.collections,[name]:rows.length}
-    });
-    getSubscribers(name).forEach(item=>item.callback(rows,{collection:name,...meta}));
-  }
-
   function loadCollection(name){
     if(!auth.currentUser){
       notifyEmptyAuth(name);
       return Promise.resolve([]);
     }
-    const ref=collection(name);
-    const cacheKey=`${auth.currentUser.uid}:${name}`;
-    const cacheRead=loadedCacheKeys.has(cacheKey)
-      ? Promise.resolve([])
-      : ref.get({source:'cache'}).then(snapshot=>{
-          if(snapshot.empty)return [];
-          loadedCacheKeys.add(cacheKey);
-          const rows=rowsFrom(snapshot);
-          publishCollection(name,rows,{fromCache:true});
-          return rows;
-        }).catch(()=>[]);
-    return cacheRead.then(()=>ref.get()).then(snapshot=>{
+    return collection(name).get().then(snapshot=>{
       const rows=rowsFrom(snapshot);
-      loadedCacheKeys.add(cacheKey);
-      publishCollection(name,rows,{fromCache:!!snapshot.metadata?.fromCache});
+      reportFirebaseStatus({
+        ok:true,
+        error:null,
+        collections:{...window.FIREBASE_STATUS.collections,[name]:rows.length}
+      });
+      getSubscribers(name).forEach(item=>item.callback(rows,{collection:name}));
       return rows;
     }).catch(error=>{
       reportFirebaseStatus({
@@ -258,14 +180,10 @@ window.FDB=(function(){
 
   auth.onAuthStateChanged(user=>{
     authReady=true;
-    if(user)setSignInPending(false);
-    const authPending=!user&&isSignInPending();
-    reportFirebaseStatus({auth:!!user,authReady:true,authPending,user:user?{uid:user.uid,email:user.email,displayName:user.displayName}:null,error:null,collections:user?{}:window.FIREBASE_STATUS.collections});
+    reportFirebaseStatus({auth:!!user,authReady:true,user:user?{uid:user.uid,email:user.email,displayName:user.displayName}:null,error:null,collections:user?{}:window.FIREBASE_STATUS.collections});
     if(user){
       hideFirebaseLogin();
       subscribers.forEach((_items,name)=>loadCollection(name));
-    }else if(authPending){
-      subscribers.forEach((_items,name)=>notifyEmptyAuth(name));
     }else{
       showFirebaseLogin();
       subscribers.forEach((_items,name)=>notifyEmptyAuth(name));

@@ -12,7 +12,6 @@ let appDataReady=false;
 let appUnlocked=false;
 let faceIdPrompted=false;
 let lastTouchEndAt=0;
-let loginBusy=false;
 
 let themeIndex=Number(localStorage.getItem('demoThemeIndex')||0);
 
@@ -65,7 +64,7 @@ function ensureNumberKeyboard(){
         <button class="numkey-key wide" type="button" data-numkey="000">000</button>
         <button class="numkey-key action" type="button" data-numkey-clear>C</button>
         <button class="numkey-key action" type="button" data-numkey-decimal>.</button>
-        <button class="numkey-key action" type="button" data-numkey-back>⌫</button>
+        <button class="numkey-key action" type="button" data-numkey-back>&#9003;</button>
       </div>
     </div>`);
   const panel=document.getElementById('numkeyPanel');
@@ -611,8 +610,6 @@ ensureBackgroundButton();
 applyStoredBackground();
 ensureBackgroundPicker();
 ensureBusyOverlay();
-preventPwaDoubleTapZoom();
-ensureNumberKeyboard();
 
 themeBtn?.addEventListener('click',()=>{
   themeIndex=(themeIndex+1)%themes.length;
@@ -642,37 +639,25 @@ new MutationObserver(mutations=>{
 function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   if(!appLoader)return;
   const collections=status.collections||{};
+  const expected=[window.FIREBASE_COLLECTIONS?.danhMuc,window.FIREBASE_COLLECTIONS?.giaoDich,window.FIREBASE_COLLECTIONS?.taiSan].filter(Boolean);
   const hasAuthRequired=Object.values(collections).some(value=>value==='auth-required');
   const hasError=Object.values(collections).some(value=>value==='error')||status.error;
-  const pending=!!(status.authPending||loginBusy);
+  const loaded=expected.length&&expected.every(name=>typeof collections[name]==='number');
 
-  if(!appUnlocked)appLoader.classList.remove('ready');
-  if(status.auth){
-    appDataReady=true;
-    appUnlocked=true;
-    loginBusy=false;
+  if(!(loaded&&appUnlocked))appLoader.classList.remove('ready');
+  if(!status.authReady){
     appLoader.classList.remove('auth-needed');
-    if(appLoaderLogin)appLoaderLogin.disabled=false;
-    setTimeout(()=>appLoader.classList.add('ready'),80);
+    if(appLoaderTitle)appLoaderTitle.textContent='Đang kiểm tra phiên đăng nhập';
+    if(appLoaderText)appLoaderText.textContent='Đang khôi phục phiên Firebase đã lưu trên thiết bị.';
+    if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
     return;
   }
-  if(!status.authReady||pending){
-    appLoader.classList.remove('auth-needed');
-    if(appLoaderTitle)appLoaderTitle.textContent=pending?'Đang hoàn tất đăng nhập':'Đang kiểm tra phiên đăng nhập';
-    if(appLoaderText)appLoaderText.textContent=pending?'Vui lòng chờ iPhone quay lại ứng dụng và khôi phục phiên Firebase.':'Đang khôi phục phiên Firebase đã lưu trên thiết bị.';
-    if(appLoaderLogin){
-      appLoaderLogin.textContent=pending?'Đang xử lý...':'Đăng nhập Google';
-      appLoaderLogin.disabled=pending;
-    }
-    return;
-  }
-  if(appLoaderLogin)appLoaderLogin.disabled=false;
-  appLoader.classList.toggle('auth-needed',!status.auth&&(hasAuthRequired||status.authReady));
-  if(!status.auth&&(hasAuthRequired||status.authReady)){
+  appLoader.classList.toggle('auth-needed',!status.auth&&hasAuthRequired);
+  if(!status.auth&&hasAuthRequired){
     appUnlocked=false;
     appDataReady=false;
     if(appLoaderTitle)appLoaderTitle.textContent='Đăng nhập lần đầu';
-    if(appLoaderText)appLoaderText.textContent='Ứng dụng iPhone dùng phiên riêng với Safari. Đăng nhập Google một lần; các lần sau app sẽ tự khôi phục phiên nếu iOS còn lưu.';
+    if(appLoaderText)appLoaderText.textContent='Ứng dụng iPhone dùng phiên riêng với Safari. Đăng nhập Google một lần, sau đó có thể mở app bằng Face ID.';
     if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
     return;
   }
@@ -682,14 +667,18 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
     appLoader.classList.add('auth-needed');
     return;
   }
-  appLoader.classList.add('ready');
-}
-
-function showFaceIdUnlock(){
-  appLoader.classList.add('auth-needed');
-  if(appLoaderTitle)appLoaderTitle.textContent='Mở khóa bằng Face ID';
-  if(appLoaderText)appLoaderText.textContent='Xác thực trên iPhone để vào ứng dụng.';
-  if(appLoaderLogin)appLoaderLogin.textContent='Mở khóa';
+  if(status.auth&&!loaded){
+    if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
+    if(appLoaderText)appLoaderText.textContent='Phiên đăng nhập đã sẵn sàng, đang tải dữ liệu từ Firebase.';
+    if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
+    return;
+  }
+  if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
+  if(appLoaderText)appLoaderText.textContent='Kết nối Firebase và chuẩn bị không gian tài chính của bạn.';
+  if(loaded){
+    appDataReady=true;
+    handleUnlockFlow();
+  }
 }
 
 function bufferToBase64url(buffer){
@@ -755,7 +744,10 @@ async function handleUnlockFlow(){
   if(!appDataReady||appUnlocked)return;
   const credentialId=localStorage.getItem(faceIdKey);
   if(credentialId){
-    showFaceIdUnlock();
+    appLoader.classList.add('auth-needed');
+    if(appLoaderTitle)appLoaderTitle.textContent='Mở khóa bằng Face ID';
+    if(appLoaderText)appLoaderText.textContent='Xác thực trên iPhone để vào ứng dụng.';
+    if(appLoaderLogin)appLoaderLogin.textContent='Mở khóa';
     return;
   }
   if(!faceIdPrompted&&window.FIREBASE_STATUS?.auth&&await platformFaceIdAvailable()){
@@ -771,12 +763,19 @@ async function handleUnlockFlow(){
 }
 
 appLoaderLogin?.addEventListener('click',async()=>{
-  if(loginBusy||window.FIREBASE_STATUS?.authPending)return;
-  if(window.FIREBASE_STATUS?.auth){
-    appUnlocked=true;
-    appDataReady=true;
-    appLoader.classList.remove('auth-needed');
-    appLoader.classList.add('ready');
+  if(localStorage.getItem(faceIdKey)&&appDataReady){
+    try{
+      const unlocked=await unlockWithFaceId();
+      if(!unlocked)throw new Error('Face ID unavailable');
+      appUnlocked=true;
+      appLoader.classList.remove('auth-needed');
+      appLoader.classList.add('ready');
+    }catch(_err){
+      localStorage.removeItem(faceIdKey);
+      if(appLoaderTitle)appLoaderTitle.textContent='Đăng nhập Google';
+      if(appLoaderText)appLoaderText.textContent='Face ID đã lưu không còn hợp lệ trên thiết bị này. Vui lòng đăng nhập Google lại một lần.';
+      if(appLoaderLogin)appLoaderLogin.textContent='Đăng nhập Google';
+    }
     return;
   }
   if(appDataReady&&window.FIREBASE_STATUS?.auth){
@@ -786,15 +785,7 @@ appLoaderLogin?.addEventListener('click',async()=>{
     appLoader.classList.add('ready');
     return;
   }
-  if(typeof window.FIREBASE_SIGN_IN==='function'){
-    loginBusy=true;
-    updateAppLoader({...window.FIREBASE_STATUS,authPending:true});
-    try{await window.FIREBASE_SIGN_IN();}
-    catch(_err){
-      loginBusy=false;
-      updateAppLoader();
-    }
-  }
+  if(typeof window.FIREBASE_SIGN_IN==='function')window.FIREBASE_SIGN_IN();
 });
 document.addEventListener('firebase:status',e=>updateAppLoader(e.detail));
 setTimeout(()=>updateAppLoader(),0);
@@ -1049,6 +1040,8 @@ function renderOverviewFromFirebase(){
 document.addEventListener('txn16:changed',renderOverviewFromFirebase);
 document.addEventListener('asset52:changed',renderOverviewFromFirebase);
 document.addEventListener('DOMContentLoaded',()=>{renderOverviewFromFirebase();syncMoneyVisibility();playOverviewAnimations();});
+preventPwaDoubleTapZoom();
+ensureNumberKeyboard();
 renderOverviewFromFirebase();
 setTimeout(playOverviewAnimations,0);
 
