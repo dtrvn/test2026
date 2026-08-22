@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260821-import-modal-numquick-az';
+const CACHE_NAME = 'qlct-pwa-v20260822-faceid-fast-unlock-a';
 const APP_SHELL = [
   './',
   './index.html',

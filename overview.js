@@ -498,8 +498,13 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
   const hasAuthRequired=Object.values(collections).some(value=>value==='auth-required');
   const hasError=Object.values(collections).some(value=>value==='error')||status.error;
   const loaded=expected.length&&expected.every(name=>typeof collections[name]==='number');
+  const hasFaceId=!!localStorage.getItem(faceIdKey);
 
   if(!(loaded&&appUnlocked))appLoader.classList.remove('ready');
+  if(hasFaceId&&!appUnlocked&&!hasAuthRequired){
+    showFaceIdUnlock();
+    return;
+  }
   if(!status.authReady){
     appLoader.classList.remove('auth-needed');
     if(appLoaderTitle)appLoaderTitle.textContent='Đang kiểm tra phiên đăng nhập';
@@ -534,6 +539,13 @@ function updateAppLoader(status=window.FIREBASE_STATUS||{}){
     appDataReady=true;
     handleUnlockFlow();
   }
+}
+
+function showFaceIdUnlock(){
+  appLoader.classList.add('auth-needed');
+  if(appLoaderTitle)appLoaderTitle.textContent='Mở khóa bằng Face ID';
+  if(appLoaderText)appLoaderText.textContent='Xác thực trên iPhone để vào ứng dụng.';
+  if(appLoaderLogin)appLoaderLogin.textContent='Mở khóa';
 }
 
 function bufferToBase64url(buffer){
@@ -599,10 +611,7 @@ async function handleUnlockFlow(){
   if(!appDataReady||appUnlocked)return;
   const credentialId=localStorage.getItem(faceIdKey);
   if(credentialId){
-    appLoader.classList.add('auth-needed');
-    if(appLoaderTitle)appLoaderTitle.textContent='Mở khóa bằng Face ID';
-    if(appLoaderText)appLoaderText.textContent='Xác thực trên iPhone để vào ứng dụng.';
-    if(appLoaderLogin)appLoaderLogin.textContent='Mở khóa';
+    showFaceIdUnlock();
     return;
   }
   if(!faceIdPrompted&&window.FIREBASE_STATUS?.auth&&await platformFaceIdAvailable()){
@@ -618,13 +627,18 @@ async function handleUnlockFlow(){
 }
 
 appLoaderLogin?.addEventListener('click',async()=>{
-  if(localStorage.getItem(faceIdKey)&&appDataReady){
+  if(localStorage.getItem(faceIdKey)){
     try{
       const unlocked=await unlockWithFaceId();
       if(!unlocked)throw new Error('Face ID unavailable');
       appUnlocked=true;
       appLoader.classList.remove('auth-needed');
-      appLoader.classList.add('ready');
+      if(appDataReady)appLoader.classList.add('ready');
+      else{
+        if(appLoaderTitle)appLoaderTitle.textContent='Đang đồng bộ dữ liệu';
+        if(appLoaderText)appLoaderText.textContent='Đã mở khóa, đang tải dữ liệu từ Firebase.';
+        if(appLoaderLogin)appLoaderLogin.textContent='Mở khóa';
+      }
     }catch(_err){
       localStorage.removeItem(faceIdKey);
       if(appLoaderTitle)appLoaderTitle.textContent='Đăng nhập Google';
