@@ -16,7 +16,7 @@
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;background:#0f172a;color:var(--text)}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;background:#eef5fb;color:var(--text)}
 html{-webkit-text-size-adjust:100%;touch-action:manipulation}
 body{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 body::before{
@@ -30,11 +30,11 @@ body::before{
   background-position:center;
 }
 body.custom-bg::before{
-  inset:calc(env(safe-area-inset-top) * -1) 0 calc(env(safe-area-inset-bottom) * -1);
+  inset:0;
   background-image:var(--custom-bg)!important;
   background-size:cover!important;
   background-position:center!important;
-  background-color:#0f172a!important;
+  background-color:#eef5fb!important;
 }
 
 .phone{
@@ -72,9 +72,9 @@ body.custom-bg{
   background-image:var(--custom-bg)!important;
   background-size:cover!important;
   background-position:center!important;
-  background-color:#0f172a!important;
+  background-color:#eef5fb!important;
 }
-body.custom-bg{align-items:stretch}
+body.custom-bg{align-items:center}
 .phone.custom-bg{border-color:transparent!important}
 .phone.custom-bg .bg-orb{display:none!important}
 .phone.custom-bg .app{background:transparent!important}
@@ -536,7 +536,8 @@ body.custom-bg{align-items:stretch}
 @media(max-width:430px){
   body{align-items:stretch}
   .phone{width:100vw;height:100vh;border-radius:0;border:0}
-  .phone.custom-bg{width:100vw!important;height:100dvh!important;max-width:100vw!important;max-height:100dvh!important;border:0!important;box-shadow:none!important}
+  .phone.custom-bg{width:100vw!important;height:100vh!important;min-height:-webkit-fill-available!important;max-width:100vw!important;max-height:none!important;border:0!important;box-shadow:none!important}
+  .phone.custom-bg .app{padding-top:calc(16px + env(safe-area-inset-top))!important}
   .app{padding:16px 14px 106px}
   .cash-card{top:86px;left:14px;right:14px}
   .dock-wrap{left:15px;right:15px;bottom:calc(8px + env(safe-area-inset-bottom));padding:0}

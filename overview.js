@@ -232,7 +232,7 @@ function applyStoredBackground(){
   const image=localStorage.getItem('qlctCustomBackground');
   const tone=localStorage.getItem('qlctCustomBackgroundTone')||'light';
   const themeMeta=document.querySelector('meta[name="theme-color"]');
-  if(themeMeta)themeMeta.setAttribute('content',image?'#0f172a':'#2563eb');
+  if(themeMeta)themeMeta.setAttribute('content',image?'#eef5fb':'#2563eb');
   [document.documentElement,document.body,phone].filter(Boolean).forEach(el=>{
     el.classList.toggle('custom-bg',!!image);
     el.classList.toggle('custom-bg-dark',!!image&&tone==='dark');
