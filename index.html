@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/favicon.ico" />
 <link rel="apple-touch-icon" href="icons/icon-180.png" />
-<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822m" />
+<link rel="stylesheet" href="overview.css?v=iphone-shell-frame-20260822n" />
 <link rel="stylesheet" href="transaction.css?v=txn-no-balance-20260820a" />
 <link rel="stylesheet" href="category.css?v=cat-pan-y-20260822a" />
 <style>
@@ -877,13 +877,13 @@
 <style id="mobile-fit-overrides">
 .app{padding-bottom:calc(58px + env(safe-area-inset-bottom))!important;}
 .cash-card{position:absolute!important;top:88px!important;left:16px!important;right:16px!important;min-height:46px!important;border-radius:0!important;padding:0 2px 2px!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;}
-.stats{margin-top:auto!important;transform:translateY(var(--overview-stack-shift,-10px))!important;}
+.stats{margin-top:auto!important;}
 .cash-card:before{display:none!important;}
 .cash-head{justify-content:flex-start!important;gap:6px!important;}
 .cash-title{font-weight:650!important;}
 .eye-btn{width:22px!important;height:22px!important;border-radius:9px!important;background:#edf3ff!important;}
 .cash-value{margin-top:5px!important;transform:none!important;font-size:20px!important;font-weight:760!important;}
-.alloc{padding:7px 10px 6px!important;min-height:130px!important;transform:translateY(var(--overview-stack-shift,-10px))!important;}
+.alloc{padding:7px 10px 6px!important;min-height:130px!important;}
 .alloc .card-title{margin-bottom:4px!important;}
 .donut-center b{display:block!important;width:74px!important;max-width:74px!important;font-size:clamp(8.6px,2.35vw,10px)!important;line-height:1.05!important;font-weight:760!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;letter-spacing:0!important;}
 .expense-row{grid-template-columns:minmax(62px,.9fr) minmax(54px,1fr) minmax(72px,.85fr)!important;gap:6px!important;min-width:0!important;font-size:9.5px!important;}
@@ -902,7 +902,7 @@
 .legend-row b{font-size:9.2px!important;text-align:right!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .legend-money{color:#334155!important;}
 @keyframes overviewDonutSpin{from{transform:rotate(-450deg)}to{transform:rotate(-90deg)}}
-.expense-card{min-height:0!important;flex:0 0 auto!important;padding:9px 12px 8px!important;transform:translateY(var(--overview-stack-shift,-10px))!important;}
+.expense-card{min-height:0!important;flex:0 0 auto!important;padding:9px 12px 8px!important;}
 .expense-head{margin-bottom:6px!important;}
 .expense-chart{gap:4px!important;}
 .report72-card-head{align-items:flex-start!important;gap:7px!important;}
@@ -1070,7 +1070,6 @@ body.custom-bg{align-items:stretch!important;background-color:var(--safe-bg-colo
   --shell-pad-x:14px;
   --shell-pad-top:16px;
   --shell-dock-space:58px;
-  --overview-stack-shift:-10px;
 }
 html,body{min-height:100%!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center bottom/cover no-repeat fixed!important;background-color:var(--safe-bg-color,#eef5fb)!important;overflow:hidden!important;}
 html::before,body::before,body::after{content:""!important;position:fixed!important;inset:-80px 0 -140px 0!important;z-index:0!important;pointer-events:none!important;background:var(--custom-bg,linear-gradient(180deg,#eaf3ff 0%,#f8fbff 100%)) center bottom/cover no-repeat!important;}
@@ -1202,7 +1201,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="firebase.js?v=asset-transaction-20260819a"></script>
-<script src="overview.js?v=iphone-shell-frame-20260822m"></script>
+<script src="overview.js?v=iphone-shell-frame-20260822n"></script>
 <script src="transaction.js?v=txn-num-pattern-20260821az"></script>
 <script src="category.js?v=cat-pan-y-20260822a"></script>
 
@@ -1214,7 +1213,7 @@ html::before,body::before,body::after{content:""!important;position:fixed!import
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822m').catch(console.error);
+    navigator.serviceWorker.register('service-worker.js?v=iphone-shell-frame-20260822n').catch(console.error);
   });
 }
 </script>
