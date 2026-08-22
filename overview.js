@@ -17,15 +17,30 @@ let loginBusy=false;
 let themeIndex=Number(localStorage.getItem('demoThemeIndex')||0);
 
 function preventPwaDoubleTapZoom(){
+  document.addEventListener('gesturestart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+  document.addEventListener('dblclick',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
   document.addEventListener('touchend',e=>{
     const now=Date.now();
-    if(now-lastTouchEndAt<320&&e.cancelable)e.preventDefault();
+    if(now-lastTouchEndAt<420&&e.cancelable)e.preventDefault();
     lastTouchEndAt=now;
   },{passive:false});
 }
 
 function ensureNumberKeyboard(){
-  const numericSelector='input[inputmode="numeric"],input[inputmode="decimal"],input[data-numkey-mode],#gold77Input';
+  const numericSelector=[
+    'input[inputmode="numeric"]',
+    'input[inputmode="decimal"]',
+    'input[data-numkey-mode]',
+    '#gold77Input',
+    '#add39Amount',
+    '#add39AssetQty',
+    '#add39AssetInterest',
+    '#add39Fee',
+    '#txn16Amount',
+    '#txn16AssetQty',
+    '#txn16AssetInterest',
+    '#txn16Fee'
+  ].join(',');
   const phoneEl=document.getElementById('phone');
   if(!phoneEl||document.getElementById('numkeyPanel'))return;
   phoneEl.insertAdjacentHTML('beforeend',`
@@ -57,6 +72,7 @@ function ensureNumberKeyboard(){
   const backdrop=document.getElementById('numkeyBackdrop');
   const valueEl=document.getElementById('numkeyValue');
   let target=null;
+  let lastManualOpenAt=0;
 
   function isNumericInput(el){
     return el?.matches?.(numericSelector)&&!el.disabled;
@@ -89,26 +105,45 @@ function ensureNumberKeyboard(){
   function openFor(input){
     target=input;
     if(!target.dataset.numkeyMode)target.dataset.numkeyMode=target.getAttribute('inputmode')||'numeric';
+    if(!target.dataset.numkeyOriginalInputmode)target.dataset.numkeyOriginalInputmode=target.getAttribute('inputmode')||'';
     target.setAttribute('inputmode','none');
-    target.blur();
+    target.setAttribute('readonly','readonly');
+    target.classList.add('numkey-active-input');
+    try{target.focus({preventScroll:true});}catch(_err){}
     displayValue();
     panel?.classList.add('show');
     backdrop?.classList.add('show');
     panel?.setAttribute('aria-hidden','false');
   }
   function close(){
+    if(target){
+      const original=target.dataset.numkeyOriginalInputmode;
+      try{target.blur();}catch(_err){}
+      target.classList.remove('numkey-active-input');
+      target.removeAttribute('readonly');
+      if(original)target.setAttribute('inputmode',original);
+      else target.removeAttribute('inputmode');
+      target.dispatchEvent(new Event('change',{bubbles:true}));
+    }
     panel?.classList.remove('show');
     backdrop?.classList.remove('show');
     panel?.setAttribute('aria-hidden','true');
     target=null;
   }
-
-  document.addEventListener('pointerdown',e=>{
+  function beginOpen(e){
     const input=e.target.closest?.(numericSelector);
     if(!isNumericInput(input))return;
-    e.preventDefault();
+    if(e.cancelable)e.preventDefault();
+    lastManualOpenAt=Date.now();
     openFor(input);
-  },true);
+  }
+
+  ['pointerdown','touchstart','mousedown'].forEach(type=>{
+    document.addEventListener(type,e=>{
+      if(type==='mousedown'&&Date.now()-lastManualOpenAt<700)return;
+      beginOpen(e);
+    },{capture:true,passive:false});
+  });
   document.addEventListener('focusin',e=>{
     if(isNumericInput(e.target))openFor(e.target);
   },true);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qlct-pwa-v20260822-pwa-auth-redirect-f';
+const CACHE_NAME = 'qlct-pwa-v20260822-ui-asset-fixes-a';
 const APP_SHELL = [
   './',
   './index.html',

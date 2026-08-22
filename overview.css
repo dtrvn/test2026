@@ -103,6 +103,11 @@ button,.nav-item,.tool,.add39-control,.txn16-control,.gold77-select,.loader-logi
 .numkey-key:active{transform:translateY(1px);background:#eef5ff}
 .numkey-key.wide{font-size:18px}
 .numkey-key.action{font-size:15px;color:#2563eb;background:#eef5ff}
+.numkey-active-input{
+  caret-color:transparent!important;
+  background:#f8fbff!important;
+  box-shadow:0 0 0 2px rgba(37,99,235,.12)!important;
+}
 
 .cash-card{
   position:absolute;
@@ -148,13 +153,13 @@ button,.nav-item,.tool,.add39-control,.txn16-control,.gold77-select,.loader-logi
 .donut-center b{display:block;width:82px;max-width:82px;font-size:clamp(9px,2.55vw,10.6px);line-height:1.05;font-weight:760;overflow:visible;text-overflow:clip;white-space:nowrap;letter-spacing:0}
 .donut-center small{font-size:8.6px;color:#667085;margin-top:2px}
 .legend{display:flex;flex-direction:column;gap:4px;min-width:0}
-.legend-row{display:grid;grid-template-columns:minmax(72px,1fr) minmax(62px,.72fr) 30px;gap:4px;align-items:center;font-size:9.3px;color:#475569;min-width:0}
+.legend-row{display:grid;grid-template-columns:minmax(72px,1fr) minmax(82px,.82fr) 32px;gap:4px;align-items:center;font-size:9.3px;color:#475569;min-width:0}
 .legend-name{display:grid;grid-template-columns:10px minmax(0,1fr);gap:6px;align-items:center;min-width:0}
 .legend-name span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dot{width:8px;height:8px;border-radius:50%}
 .legend-row b{font-size:9.4px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .legend-money{color:#334155!important}
-.legend-row .legend-money{transform:translateX(-40px)}
+.legend-row .legend-money{transform:translateX(20px);overflow:visible;text-overflow:clip}
 
 @keyframes overviewDonutSpin{
   from{transform:rotate(-450deg)}

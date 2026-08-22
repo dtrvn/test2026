@@ -5,8 +5,9 @@
   let rawAssetRows=[];
   let cleanedGeneratedCashRows=false;
   let cleanedNonAssetTransactionRows=false;
+  let cleanedOrphanTransactionRows=false;
   const pendingPostAttempts=new Set();
-  const BANK_ASSET_DOC_ID='TS_BANK_ACCOUNT';
+  const BANK_ASSET_DOC_ID='TS_BANK_220820260000';
   const colors={cash:'#2563eb',gold:'#f59e0b',goldWedding:'#ec4899',gold98:'#d97706',stock:'#10b981',saving:'#8b5cf6',insurance:'#06b6d4',realestate:'#ef4444',other:'#06b6d4'};
   const fmt=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
   const fmtProfit=n=>Number(n||0)===0?'0 đ':(Number(n)>0?'+':'')+fmt(n);
@@ -245,16 +246,41 @@
     return {qty,unit:unit||rule.unit||'Đơn vị',unitPrice:p,fee,interestRate,settlementCost};
   }
 
+  function assetTypeCode(type){
+    const value=String(type||'').toUpperCase();
+    if(value==='LAND')return 'LAND';
+    if(value==='STOCK')return 'STOCK';
+    if(value==='SAVING')return 'SAVING';
+    if(value==='INSURANCE')return 'INSURANCE';
+    if(value==='GOLD')return 'GOLD';
+    return 'BANK';
+  }
+
+  function timestampPartsFromTransaction(tx){
+    const businessId=String(firstValue(tx,['external_id','id'])||'');
+    const match=businessId.match(/GD(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/);
+    if(match)return {year:match[1],month:match[2],day:match[3],hour:match[4],second:match[6]};
+    const raw=firstValue(tx,['created_at','createdAt','date','ngay'])||new Date().toISOString();
+    const date=new Date(String(raw).length<=10?`${raw}T00:00:00`:raw);
+    const safe=Number.isNaN(date.getTime())?new Date():date;
+    return {
+      year:String(safe.getFullYear()),
+      month:String(safe.getMonth()+1).padStart(2,'0'),
+      day:String(safe.getDate()).padStart(2,'0'),
+      hour:String(safe.getHours()).padStart(2,'0'),
+      second:String(safe.getSeconds()).padStart(2,'0')
+    };
+  }
+
+  function formattedAssetDocId(type,tx){
+    const p=timestampPartsFromTransaction(tx);
+    return `TS_${assetTypeCode(type)}_${p.day}${p.month}${p.year}${p.hour}${p.second}`;
+  }
+
   function assetDocIdFor(tx,rule){
     const detail=tx?.assetDetail||tx?.chi_tiet_tai_san;
-    if(rule.assetType==='SAVING')return 'TS_SAVING';
     if(detail?.tai_san_id)return String(detail.tai_san_id);
-    const name=transactionAssetName(tx);
-    const existing=rawAssetRows.find(row=>String(row.loai_tai_san||row.loaiTaiSan||'')===rule.assetType&&plainText(row.ten_tai_san||row.name||row.ten)===plainText(name));
-    if(existing?.id)return existing.id;
-    const clean=slug(name).replace(/-/g,'_').toUpperCase();
-    if(rule.assetType==='GOLD'&&plainText(name).includes('98'))return 'TS_GOLD_98';
-    return `TS_${rule.assetType}_${clean}`;
+    return formattedAssetDocId(rule.assetType,tx);
   }
 
   function txSortValue(tx){
@@ -429,10 +455,31 @@
     Promise.all(rows.map(row=>window.FDB.remove(FIREBASE_COLLECTIONS.taiSan,row.id).catch(console.error))).catch(console.error);
   }
 
+  function transactionsLoaded(){
+    const name=window.FIREBASE_COLLECTIONS?.giaoDich;
+    return name&&typeof window.FIREBASE_STATUS?.collections?.[name]==='number';
+  }
+
+  function cleanupOrphanTransactionAssetRows(){
+    if(cleanedOrphanTransactionRows||!window.FDB||typeof window.TXN_getTransactions!=='function'||!transactionsLoaded())return;
+    const txns=window.TXN_getTransactions();
+    if(!Array.isArray(txns))return;
+    const byId=transactionLookup(txns);
+    const rows=rawAssetRows.filter(row=>{
+      if(String(row.id||'')==='TS_SAVING')return true;
+      if(!row.source_txn_doc_id&&!row.source_txn_external_id&&!row.so_tiet_kiem_id&&!row.savingBookId)return false;
+      if(isCashKey(assetKey(row)))return false;
+      return !sourceTransaction(row,byId);
+    });
+    if(!rows.length)return;
+    cleanedOrphanTransactionRows=true;
+    Promise.all(rows.map(row=>window.FDB.remove(FIREBASE_COLLECTIONS.taiSan,row.id).catch(console.error))).catch(console.error);
+  }
+
   function transactionLookup(txns){
     const map=new Map();
     (txns||[]).forEach(tx=>{
-      [tx.id,tx.external_id,tx.source_txn_doc_id,tx.source_txn_external_id].forEach(id=>{
+      [tx.id,tx.external_id,tx.source_txn_doc_id,tx.source_txn_external_id,tx.savingBookId,tx.so_tiet_kiem_id].forEach(id=>{
         if(id)map.set(String(id),tx);
       });
     });
@@ -443,6 +490,7 @@
     if(!lookup)return null;
     return lookup.get(String(row.source_txn_doc_id||''))
       ||lookup.get(String(row.source_txn_external_id||''))
+      ||lookup.get(String(row.so_tiet_kiem_id||row.savingBookId||''))
       ||lookup.get(String(row.external_id||''))
       ||null;
   }
@@ -457,16 +505,16 @@
   }
 
   function visibleAssetRows(rows){
-    const base=(rows||[]).filter(row=>!isClosedEmptyAssetRow(row));
+    const base=(rows||[]).filter(row=>!isClosedEmptyAssetRow(row)&&String(row.id||'')!=='TS_SAVING');
     if(typeof window.TXN_getTransactions!=='function')return base;
     const txns=window.TXN_getTransactions();
     if(!Array.isArray(txns)||!txns.length)return base;
     const lookup=transactionLookup(txns);
     return base.filter(row=>{
-      if(!row.source_txn_doc_id)return true;
+      if(!row.source_txn_doc_id&&!row.source_txn_external_id&&!row.so_tiet_kiem_id&&!row.savingBookId)return true;
       if(isCashKey(assetKey(row)))return false;
       const tx=sourceTransaction(row,lookup);
-      return !tx||['BUY','SELL'].includes(transactionAssetAction(tx));
+      return !!tx&&['BUY','SELL'].includes(transactionAssetAction(tx));
     });
   }
 
@@ -1573,6 +1621,10 @@
   function assetPayloadFromRow(row){
     return {
       id:row?.id||'',
+      sourceTxnDocId:String(row?.source_txn_doc_id||row?.sourceTxnDocId||''),
+      sourceTxnExternalId:String(row?.source_txn_external_id||row?.sourceTxnExternalId||''),
+      savingBookId:String(row?.so_tiet_kiem_id||row?.savingBookId||''),
+      savingBookLabel:String(row?.so_tiet_kiem_label||row?.savingBookLabel||''),
       type:String(row?.loai_tai_san||row?.loaiTaiSan||''),
       name:String(row?.ten_tai_san||row?.name||''),
       qty:parseNumber(row?.so_luong??row?.soLuong),
@@ -1598,6 +1650,10 @@
     const currentPrice=rule.assetType==='GOLD'?0:input.unitPrice;
     return {
       id,
+      sourceTxnDocId:firstValue(tx,['id','_docId']),
+      sourceTxnExternalId:firstValue(tx,['external_id','id']),
+      savingBookId:firstValue(tx,['so_tiet_kiem_id','savingBookId']),
+      savingBookLabel:firstValue(tx,['so_tiet_kiem_label','savingBookLabel']),
       type:rule.assetType,
       name,
       qty:0,
@@ -1621,7 +1677,16 @@
   function applyAssetDelta(state,tx,rule,input){
     const amount=amountOf(tx);
     const date=firstValue(tx,['date','ngay'])||new Date().toISOString().slice(0,10);
-    const next={...state,date,interestRate:input.interestRate||state.interestRate||'',note:firstValue(tx,['note','ghi_chu','ghiChu'])||state.note};
+    const next={
+      ...state,
+      date,
+      sourceTxnDocId:state.sourceTxnDocId||firstValue(tx,['id','_docId']),
+      sourceTxnExternalId:state.sourceTxnExternalId||firstValue(tx,['external_id','id']),
+      savingBookId:state.savingBookId||firstValue(tx,['so_tiet_kiem_id','savingBookId']),
+      savingBookLabel:state.savingBookLabel||firstValue(tx,['so_tiet_kiem_label','savingBookLabel']),
+      interestRate:input.interestRate||state.interestRate||'',
+      note:firstValue(tx,['note','ghi_chu','ghiChu'])||state.note
+    };
     if(rule.action==='BUY'){
       const buyCost=Math.round(input.qty*input.unitPrice+input.fee);
       next.qty=Number(next.qty||0)+input.qty;
@@ -1698,6 +1763,10 @@
       : (isSaving?Math.round(Number(state.realizedProfit||0)):Math.round(Number(state.totalProfit??state.tempProfit??0)));
     return {
       loai_tai_san:state.type,
+      source_txn_doc_id:state.sourceTxnDocId||'',
+      source_txn_external_id:state.sourceTxnExternalId||'',
+      so_tiet_kiem_id:state.savingBookId||'',
+      so_tiet_kiem_label:state.savingBookLabel||'',
       ten_tai_san:state.name,
       so_luong:state.qty,
       don_vi:state.unit,
@@ -1749,7 +1818,7 @@
   function applyNewTransactionOnly(tx,txnDocId){
     if(!tx||!txnDocId||!window.FDB)return Promise.resolve();
     const rule=assetRuleFor(tx);
-    const bankId=bankRow()?.id||'TS_BANK_20260814001';
+    const bankId=bankRow()?.id||BANK_ASSET_DOC_ID;
     const amount=amountOf(tx);
     const run=async writer=>{
       const storedTx=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
@@ -1805,7 +1874,7 @@
       const storedTx=await writer.get(FIREBASE_COLLECTIONS.giaoDich,txnDocId);
       const source=storedTx||tx;
       if(source.trang_thai_hach_toan!=='POSTED'&&tx.postingStatus!=='POSTED')return;
-      const bankId=source.tai_khoan_id||tx.accountId||bankRow()?.id||'TS_BANK_20260814001';
+      const bankId=source.tai_khoan_id||tx.accountId||bankRow()?.id||BANK_ASSET_DOC_ID;
       const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
       const d=source.chi_tiet_tai_san||detail;
       const asset=d?.tai_san_id?await writer.get(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id):null;
@@ -1841,7 +1910,7 @@
     const source=storedTx||fallbackTx||{};
     if(source.trang_thai_hach_toan!=='POSTED'&&fallbackTx?.postingStatus!=='POSTED')return;
     const d=source.chi_tiet_tai_san||fallbackTx?.assetDetail||fallbackTx?.chi_tiet_tai_san;
-    const bankId=source.tai_khoan_id||fallbackTx?.accountId||bankRow()?.id||'TS_BANK_20260814001';
+    const bankId=source.tai_khoan_id||fallbackTx?.accountId||bankRow()?.id||BANK_ASSET_DOC_ID;
     const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
     const asset=d?.tai_san_id?await writer.get(FIREBASE_COLLECTIONS.taiSan,d.tai_san_id):null;
     writer.set(FIREBASE_COLLECTIONS.taiSan,bankId,bankPayloadAfter(bank||{},-(Number(source.bien_dong_so_du||fallbackTx?.balanceDelta||0)||0)),{merge:true});
@@ -1866,7 +1935,7 @@
 
   async function postTransactionInWriter(writer,tx,txnDocId,baseData){
     const rule=assetRuleFor(tx);
-    const bankId=bankRow()?.id||'TS_BANK_20260814001';
+    const bankId=bankRow()?.id||BANK_ASSET_DOC_ID;
     if(!rule){
       const delta=accountingPayload(tx).bien_dong_so_du;
       const bank=await writer.get(FIREBASE_COLLECTIONS.taiSan,bankId);
@@ -1899,8 +1968,8 @@
       const shouldReverse=oldSource.trang_thai_hach_toan==='POSTED';
       const newRule=assetRuleFor(source);
       const newInput=newRule?convertedAssetInput(source,newRule):null;
-      const oldBankId=shouldReverse?(oldSource.tai_khoan_id||bankRow()?.id||'TS_BANK_20260814001'):'';
-      const newBankId=bankRow()?.id||'TS_BANK_20260814001';
+      const oldBankId=shouldReverse?(oldSource.tai_khoan_id||bankRow()?.id||BANK_ASSET_DOC_ID):'';
+      const newBankId=bankRow()?.id||BANK_ASSET_DOC_ID;
       const oldAssetId=shouldReverse&&oldDetail?.tai_san_id?oldDetail.tai_san_id:'';
       const newAssetId=newRule?assetDocIdFor(source,newRule):'';
       const bankIds=[...new Set([oldBankId,newBankId].filter(Boolean))];
@@ -2023,6 +2092,7 @@
     if(!window.FDB)return;
     window.FDB.subscribe(FIREBASE_COLLECTIONS.taiSan,data=>{
       rawAssetRows=data.slice();
+      cleanupOrphanTransactionAssetRows();
       normalizeAssets(data);
       renderAssets();
     },console.error);
@@ -2080,6 +2150,7 @@
     if(e.target.closest('[data-asset-detail-back]'))closeDetail();
   },true);
   document.addEventListener('txn16:changed',()=>{
+    cleanupOrphanTransactionAssetRows();
     normalizeAssets(rawAssetRows);
     renderAssets();
     postPendingCurrentTransactions();
