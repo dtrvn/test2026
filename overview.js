@@ -231,14 +231,20 @@ function ensureBackgroundButton(){
 function applyStoredBackground(){
   const image=localStorage.getItem('qlctCustomBackground');
   const tone=localStorage.getItem('qlctCustomBackgroundTone')||'light';
+  const edgeColor=localStorage.getItem('qlctCustomBackgroundEdge')||'#5f95c8';
   const themeMeta=document.querySelector('meta[name="theme-color"]');
-  if(themeMeta)themeMeta.setAttribute('content',image?'#eef5fb':'#2563eb');
+  if(themeMeta)themeMeta.setAttribute('content',image?edgeColor:'#2563eb');
   [document.documentElement,document.body,phone].filter(Boolean).forEach(el=>{
     el.classList.toggle('custom-bg',!!image);
     el.classList.toggle('custom-bg-dark',!!image&&tone==='dark');
     el.classList.toggle('custom-bg-light',!!image&&tone!=='dark');
-    if(image)el.style.setProperty('--custom-bg',`url("${image}")`);
-    else el.style.removeProperty('--custom-bg');
+    if(image){
+      el.style.setProperty('--custom-bg',`url("${image}")`);
+      el.style.setProperty('--safe-bg-color',edgeColor);
+    }else{
+      el.style.removeProperty('--custom-bg');
+      el.style.removeProperty('--safe-bg-color');
+    }
   });
 }
 
@@ -257,6 +263,20 @@ function canvasTone(canvas){
     count++;
   }
   return total/Math.max(count,1)<132?'dark':'light';
+}
+
+function canvasEdgeColor(canvas){
+  const ctx=canvas.getContext('2d');
+  const sampleH=Math.max(1,Math.min(36,Math.round(canvas.height*.08)));
+  const data=ctx.getImageData(0,canvas.height-sampleH,canvas.width,sampleH).data;
+  let r=0,g=0,b=0,count=0;
+  for(let i=0;i<data.length;i+=4){
+    const a=data[i+3]/255;
+    r+=data[i]*a;g+=data[i+1]*a;b+=data[i+2]*a;count+=a;
+  }
+  const toHex=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0');
+  count=Math.max(count,1);
+  return `#${toHex(r/count)}${toHex(g/count)}${toHex(b/count)}`;
 }
 
 function ensureBackgroundPicker(){
@@ -321,7 +341,7 @@ function ensureBackgroundPicker(){
   bgBtn?.addEventListener('click',openPanel);
   backdrop.addEventListener('click',closePanel);
   document.getElementById('bg90Choose').addEventListener('click',()=>{closePanel();file.click();});
-  document.getElementById('bg90Default').addEventListener('click',()=>{localStorage.removeItem('qlctCustomBackground');localStorage.removeItem('qlctCustomBackgroundTone');applyStoredBackground();closePanel();});
+  document.getElementById('bg90Default').addEventListener('click',()=>{localStorage.removeItem('qlctCustomBackground');localStorage.removeItem('qlctCustomBackgroundTone');localStorage.removeItem('qlctCustomBackgroundEdge');applyStoredBackground();closePanel();});
   file.addEventListener('change',e=>{
     const selected=e.target.files?.[0];
     if(!selected)return;
@@ -357,6 +377,7 @@ function ensureBackgroundPicker(){
     outCtx.drawImage(cropState.img,cropState.x*sx,cropState.y*sy,cropState.img.width*cropState.scale*sx,cropState.img.height*cropState.scale*sy);
     localStorage.setItem('qlctCustomBackground',out.toDataURL('image/jpeg',0.9));
     localStorage.setItem('qlctCustomBackgroundTone',canvasTone(out));
+    localStorage.setItem('qlctCustomBackgroundEdge',canvasEdgeColor(out));
     applyStoredBackground();
     closeCrop();
   });
